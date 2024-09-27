@@ -353,10 +353,18 @@ elseif draw
 
 else
     %circ = viscircles(center, radii,'Color','b');
+
+    hFig = figure;
+    basisImage = imadjust(im2gray(imread( [imagefiles(end).folder '\' imagefiles(end).name])));
+    crop = basisImage;
+    imshow(crop);
+
     circ = drawcircle('Center',[center(1),center(2)],'Radius',radii);
+    mask = createMask(circ);
+    pos = circ.Vertices;
+    pos = interppolygon(pos,360,'linear');
 
     dataOutput_immediate = [center radii metric];
-    mask = createMask(circ);
     alphamat = imguidedfilter(single(mask),basis_tiff_stack_crop,'DegreeOfSmoothing',2);
     imshow(uint8(single(basis_tiff_stack_crop).*alphamat))
     cir = true;
@@ -527,6 +535,7 @@ for i = 1:num_images
             end
     
             line_std_vals(ind,i) = mean(std(linevalues_cumulative(temp:leap,:,i),0,1));
+            linevalues_cumulative_c(temp:leap,:,i) = 30*ind;
             binned_vals(ind,i) = mean(linevalues_cumulative(temp:leap,:,i),'all');
             std_binned_vals(ind,i) = std(linevalues_cumulative(temp:leap,:,i),[],'all');
             r_section(ind,1,i) = r_values(temp);

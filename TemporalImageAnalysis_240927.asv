@@ -353,6 +353,13 @@ elseif draw
 
 else
     %circ = viscircles(center, radii,'Color','b');
+
+    hFig = figure;
+                
+    
+    basisImage = imadjust(im2gray(imread( [imagefiles(end).folder '\' imagefiles(end).name])));
+    crop = basisImage;
+    imshow(crop);
     circ = drawcircle('Center',[center(1),center(2)],'Radius',radii);
 
     dataOutput_immediate = [center radii metric];
