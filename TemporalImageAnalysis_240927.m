@@ -6,7 +6,11 @@ warning('on','all')
 tic
 
 %defines image directory
-imagefiles = dir('*.png');
+%set file path to '' if you only want to select images in the folder this
+%code file is in
+filepath = 'C:\Users\mmani\University of Michigan Dropbox\Matthew Manion\Temporal-Image-Analysis\Sample Dataset';
+imagepath = [filepath  '\*.png'];
+imagefiles = dir(imagepath);
 num_images = length(imagefiles);
 
 
@@ -40,7 +44,7 @@ if isequal(boolbasis,'yes')
         i = 1;
         while i < 8
             rng("default");
-            BasisImage = imagefiles(i).name;
+            BasisImage = [imagefiles(i).folder '\' imagefiles(i).name];
             basis_tiff_stack = imadjust(im2gray(imread(BasisImage)),[0,1]);
             basis_tiff_stack_crop = basis_tiff_stack;
             %imshow(basis_tiff_stack_crop);
@@ -64,7 +68,7 @@ if isequal(boolbasis,'yes')
         
         end
     else
-        BasisImage = imagefiles(i).name;
+        BasisImage = [imagefiles(i).folder '\' imagefiles(i).name];
         basis_tiff_stack = imadjust(im2gray(imread(BasisImage)),[0,1]);
         basis_tiff_stack_crop = basis_tiff_stack;
         [row,col] = size(basis_tiff_stack_crop);
@@ -100,7 +104,8 @@ if isequal(boolbasis,'yes')
         metric = mean(metrics);
 
     end
-    basisImage = imadjust(im2gray(imread(imagefiles(basisindex(1)).name)));
+    %basisImage = imadjust(im2gray(imread(imagefiles(basisindex(1)).name))); [imagefiles(i).folder imagefiles(i).name];
+    basisImage = imadjust(im2gray(imread([imagefiles(basisindex(1)).folder '\' imagefiles(basisindex(1)).name])));
     crop = basisImage;
     imshow(crop);
     viscircles(center, radii,'Color','b');
@@ -134,7 +139,8 @@ if isequal(boolbasis,'yes')
             hFig = figure;
             
 
-            basisImage = imadjust(im2gray(imread(imagefiles(end).name)));
+            %basisImage = imadjust(im2gray(imread(imagefiles(end).name))); [imagefiles(i).folder imagefiles(i).name]
+            basisImage = imadjust(im2gray(imread([imagefiles(end).folder '\' imagefiles(end).name])));
             crop = basisImage;
             imshow(crop);
             
@@ -184,7 +190,8 @@ if isequal(boolbasis,'yes')
                 hFig = figure;
                 
     
-                basisImage = imadjust(im2gray(imread(imagefiles(end).name)));
+                %basisImage = imadjust(im2gray(imread(imagefiles(end).name))); [imagefiles(i).folder imagefiles(i).name]
+                basisImage = imadjust(im2gray(imread( [imagefiles(end).folder '\' imagefiles(end).name])));
                 crop = basisImage;
                 imshow(crop);
                 shape = drawfreehand();
@@ -196,7 +203,7 @@ if isequal(boolbasis,'yes')
                 hFig = figure;
                 
     
-                basisImage = imadjust(im2gray(imread(imagefiles(end).name)));
+                basisImage = imadjust(im2gray(imread( [imagefiles(end).folder '\' imagefiles(end).name])));
                 crop = basisImage;
                 imshow(crop);
                 shape = drawrectangle();
@@ -243,7 +250,7 @@ if isequal(boolbasis,'yes')
                 hFig = figure;
                 
     
-                basisImage = imadjust(im2gray(imread(imagefiles(end).name)));
+                basisImage = imadjust(im2gray(imread( [imagefiles(end).folder '\' imagefiles(end).name])));
                 crop = basisImage;
                 imshow(crop);
                 shape = drawpolygon();
@@ -255,7 +262,7 @@ if isequal(boolbasis,'yes')
                 hFig = figure;
                 
     
-                basisImage = imadjust(im2gray(imread(imagefiles(end).name)));
+                basisImage = imadjust(im2gray(imread( [imagefiles(end).folder '\' imagefiles(end).name])));
                 crop = basisImage;
                 imshow(crop);
                 shape = drawassisted();
@@ -272,7 +279,7 @@ if isequal(boolbasis,'yes')
                 hFig = figure;
                 
     
-                basisImage = imadjust(im2gray(imread(imagefiles(end).name)));
+                basisImage = imadjust(im2gray(imread( [imagefiles(end).folder '\' imagefiles(end).name])));
                 crop = basisImage;
                 imshow(crop);
                 shape = drawline();
@@ -305,7 +312,7 @@ if isequal(boolbasis,'yes')
 end
 close all
 %change this to be more "firstimage" and use current image in loop
-BasisImage = imread(imagefiles(basisindex(1)).name);
+BasisImage = imread([imagefiles(basisindex(1)).folder '\' imagefiles(basisindex(1)).name]);
 
 
 % if channelid == '1'
@@ -405,7 +412,7 @@ wellradius_guess = floor(dataOutput_immediate(1,3));
     for ii = 1:num_images
     
         %add in loop over images to change currentImage
-        currentImage = imagefiles(ii).name;
+        currentImage = [imagefiles(ii).folder '\' imagefiles(ii).name];
         %tiff_stack1 = imread(currentImage, "tiff");
         %tiff_stack = imadjust(imread(currentImage, "tiff"));
         tiff_stack = im2gray(imread(currentImage));
@@ -711,7 +718,7 @@ boolgif = input(prompt,'s');
 if isequal(boolgif,'yes')
     imagedata = ones(irow,icol,num_images);
     for i = 1:num_images
-        tiff_stack2 = im2gray(imread(imagefiles(i).name));
+        tiff_stack2 = im2gray(imread([imagefiles(i).folder '\' imagefiles(i).name]));
         imagedata(:,:,i) = imadjust(uint8(single(tiff_stack2).*alphamat));
         
     
@@ -1269,4 +1276,80 @@ function A = concentricsquare(sz,difference)
     
     % sz = 20;         % matrix size, square, positive integer
     % difference = 1;  % width of bands, positive integer 1 <= x <= (sz/2)-1
+end
+
+function [threshImage, threshVal] = imthresh(image)
+
+%Set inital guess threshold with Otsu method
+threshVal = graythresh(image);
+
+%SHOW ORIGINAL AND THRESHOLDED IMAGES
+threshImage = im2bw(image,threshVal);
+threshWord = strcat('Threshold = ', num2str(threshVal));
+FigHandle = figure('Position', [100, 100, 1600, 800]);
+subplot(1,2,1), imshow(image);
+subplot(1,2,2), imshow(threshImage), text(-10,-10,threshWord);
+
+%MANUALLY ADJUST THRESHOLD VALUE
+button = 1;
+    while isempty(button) ~= 1
+           
+         [x,y,button] = ginput(1);
+    
+        % arrow keys to adjust threshold value
+        if button == 30 % up arrow
+            threshVal = threshVal + .01;
+            if threshVal > 1
+                threshVal = .99;
+            end
+        end
+        if button == 31 % down arrow
+            threshVal = threshVal - .01;
+            if threshVal <= 0
+                threshVal = 0.01;
+            end
+        end
+        if button == 28 % left arrow
+            threshVal = threshVal - .005;
+            if threshVal <= 0
+                threshVal = 0.01;
+            end
+        end
+        if button == 29 % right arrow
+            threshVal = threshVal + .005;
+             if threshVal > 1
+                threshVal = .99;
+            end
+        end
+        figure
+        threshVal;
+        button;
+        threshImage = im2bw(image,threshVal);
+        threshWord = strcat('Threshold = ', num2str(threshVal));
+        imshow(threshImage);
+        text(-10, -10, threshWord);
+    end
+end
+
+
+%Make Mask
+%Bobby Kent
+%9/20/24
+%
+%Funciton that makes a mask from an image of a cell stain.
+%
+%Takes an image stored as a matrix variable as an input and outputs mask as
+%a binary matrix.
+%
+%Email bobbykent14@gmail.com with questions.
+
+function [mask] = make_mask(input_img)
+
+%Get threshold
+[~, thresh] = imthresh(input_img);
+mask_temp = im2bw(input_img,thresh);
+mask_temp = bwmorph(mask_temp, 'close');
+mask_temp = bwareaopen(mask_temp,10); % remove clusters smaller than 10 pixels
+mask = bwmorph(mask_temp, 'spur');
+
 end
