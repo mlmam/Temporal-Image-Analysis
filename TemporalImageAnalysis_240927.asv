@@ -8,8 +8,9 @@ tic
 %defines image directory
 %set file path to '' if you only want to select images in the folder this
 %code file is in
-filepath = 'C:\Users\mmani\University of Michigan Dropbox\Matthew Manion\Temporal-Image-Analysis\Sample Dataset';
-imagepath = [filepath  '\*.png'];
+%filepath = 'C:\Users\Matthew\University of Michigan Dropbox\Matthew Manion\Temporal-Image-Analysis\Sample Dataset';
+filepath = '';
+imagepath = [filepath  'ConcentricSquare.jpg'];
 imagefiles = dir(imagepath);
 num_images = length(imagefiles);
 
@@ -219,6 +220,8 @@ if isequal(boolbasis,'yes')
                     else
                         % Update the wait bar
                         waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
+                        area = shape.Position(3)*shape.Position(4);
+                        text(1,1,str(area))
                     end
                     
                     
@@ -435,13 +438,16 @@ elseif isequal(thrbool,'auto')
             [~, thresh] = make_mask(imagmasked,i,thresh);
         end
         saumask = sauvola(imag,[3,3],thresh);
+        if ~objbool
+            saumask = ~saumask;
+        end
         %imagmasked = uint8(single(imag).*alphamat);
-        imagmasked(~saumask*objbool) = 0;
+        imagmasked(~saumask) = 0;
 
         
         imag2 = im2gray(imread( [imagefiles(i).folder '\' imagefiles(i).name]));
         imagmasked2 = uint8(single(imag2).*alphamat);
-        imagmasked(saumask*objbool) = imagmasked2(saumask*objbool);
+        imagmasked(saumask) = imagmasked2(saumask);
         mask_image_data(:,:,i) = imagmasked;
     
     end
@@ -449,8 +455,8 @@ elseif isequal(thrbool,'auto')
 
 
 end
-figure
-imshow(uint8(mask_image_data(:,:,1)));
+% figure
+% imshow(uint8(mask_image_data(:,:,1)));
 
 mags = ones(1,length(pos(:,1)));
 for posi = 1:length(pos(:,1))
@@ -507,6 +513,8 @@ wellradius_guess = floor(dataOutput_immediate(1,3));
             
             if radii ~= 0 && ~draw
                 linevalues_output = improfile(tiff_stack,[dataOutput_immediate(1,1) dataOutput_immediate(1,1)+(wellradius_guess*cosd(anglevalue))],[dataOutput_immediate(1,2) dataOutput_immediate(1,2)+(wellradius_guess*sind(anglevalue))],num_points);
+                % line([dataOutput_immediate(1,1) dataOutput_immediate(1,1)+(wellradius_guess*cosd(anglevalue))],[dataOutput_immediate(1,2) dataOutput_immediate(1,2)+(wellradius_guess*sind(anglevalue))]);
+
                 % linemin = min(linevalues_output);
                 % linemax = max(linevalues_output);
                 % linevalues_output = linevalues_output/

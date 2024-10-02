@@ -8,8 +8,9 @@ tic
 %defines image directory
 %set file path to '' if you only want to select images in the folder this
 %code file is in
-filepath = 'C:\Users\mmani\University of Michigan Dropbox\Matthew Manion\Temporal-Image-Analysis\Sample Dataset';
-imagepath = [filepath  '\*.png'];
+%filepath = 'C:\Users\Matthew\University of Michigan Dropbox\Matthew Manion\Temporal-Image-Analysis\Sample Dataset';
+filepath = '';
+imagepath = [filepath  'ConcentricSquare.jpg'];
 imagefiles = dir(imagepath);
 num_images = length(imagefiles);
 
@@ -147,10 +148,12 @@ if isequal(boolbasis,'yes')
             xdata = circ.Children.XData;
             ydata = circ.Children.YData;
             hold on
+            % txt = text(1,20,'0');
             plot(xdata,ydata,'LineWidth',4,'Color','r');
             disp('Use arrow keys to move the circle, w increases radius, s decreases radius');
             disp('You must have the figure with the red circle open to adjust the circle')
             set(hFig,'KeyPressFcn',{@KeyPressCb,1,xdata,ydata,center,radii});
+            % txt = text(1,20,'0');
             hWaitbar = waitbar(0, 'Hit Cancel When Your Circle Is Good', 'Name', 'Hit Cancel When The Circle Is Good','CreateCancelBtn','delete(gcbf)');
             while true
                 
@@ -163,6 +166,9 @@ if isequal(boolbasis,'yes')
                 else
                     % Update the wait bar
                     waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
+                    % area = polyarea(xdata,ydata);
+
+                    % set(txt,'String',['Pixel Area: ' num2str(area)]);
                 end
                 
                 
@@ -183,7 +189,7 @@ if isequal(boolbasis,'yes')
             center = [x_cen,y_cen];
             close all
         else
-            prompt = 'What shape do you want to draw? \n (reply rect, poly, free, assist, line): ';
+            prompt = 'What shape do you want to draw? \n (reply rect, poly, free, assist, line, circ): ';
             booldraw = input(prompt,'s');
             if isequal(booldraw,'free')
 
@@ -195,6 +201,36 @@ if isequal(boolbasis,'yes')
                 crop = basisImage;
                 imshow(crop);
                 shape = drawfreehand();
+                txt = text(1,20,'0');
+                hWaitbar = waitbar(0, 'Hit Cancel When Your Drawing Is Good', 'Name', 'Hit Cancel When The Drawing Is Good','CreateCancelBtn','delete(gcbf)');
+                while true
+                    
+    
+                    
+                    if ~ishandle(hWaitbar)
+                        % Stop the if cancel button was pressed
+                        disp('Stopped by user');
+                        break;
+                    else
+                        % Update the wait bar
+                        waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
+                        area = polyarea(shape.Position(:,1),shape.Position(:,2));
+
+                        set(txt,'String',['Pixel Area: ' num2str(area)]);
+                        
+                    end
+                    
+                    
+                    drawnow
+                
+    
+               
+    
+    
+                end
+
+
+
                 mask = createMask(shape);
                 pos = shape.Position;
                 pos = interppolygon(pos,360,'linear');
@@ -207,6 +243,7 @@ if isequal(boolbasis,'yes')
                 crop = basisImage;
                 imshow(crop);
                 shape = drawrectangle();
+                txt = text(1,20,'0');
                 hWaitbar = waitbar(0, 'Hit Cancel When Your Rectangle Is Good', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
                 while true
                     
@@ -219,6 +256,10 @@ if isequal(boolbasis,'yes')
                     else
                         % Update the wait bar
                         waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
+                        area = shape.Position(3)*shape.Position(4);
+
+                        set(txt,'String',['Pixel Area: ' num2str(area)]);
+                        
                     end
                     
                     
@@ -254,6 +295,36 @@ if isequal(boolbasis,'yes')
                 crop = basisImage;
                 imshow(crop);
                 shape = drawpolygon();
+                txt = text(1,20,'0');
+                hWaitbar = waitbar(0, 'Hit Cancel When Your Drawing Is Good', 'Name', 'Hit Cancel When The Drawing Is Good','CreateCancelBtn','delete(gcbf)');
+                while true
+                    
+    
+                    
+                    if ~ishandle(hWaitbar)
+                        % Stop the if cancel button was pressed
+                        disp('Stopped by user');
+                        break;
+                    else
+                        % Update the wait bar
+                        waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
+                        area = polyarea(shape.Position(:,1),shape.Position(:,2));
+
+                        set(txt,'String',['Pixel Area: ' num2str(area)]);
+                        
+                    end
+                    
+                    
+                    drawnow
+                
+    
+               
+    
+    
+                end
+
+
+
                 mask = createMask(shape);
                 pos = shape.Position;
                 pos = interppolygon(pos,360,'linear');
@@ -266,6 +337,33 @@ if isequal(boolbasis,'yes')
                 crop = basisImage;
                 imshow(crop);
                 shape = drawassisted();
+                txt = text(1,20,'0');
+                hWaitbar = waitbar(0, 'Hit Cancel When Your Drawing Is Good', 'Name', 'Hit Cancel When The Drawing Is Good','CreateCancelBtn','delete(gcbf)');
+                while true
+                    
+    
+                    
+                    if ~ishandle(hWaitbar)
+                        % Stop the if cancel button was pressed
+                        disp('Stopped by user');
+                        break;
+                    else
+                        % Update the wait bar
+                        waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
+                        area = polyarea(shape.Position(:,1),shape.Position(:,2));
+
+                        set(txt,'String',['Pixel Area: ' num2str(area)]);
+                        
+                    end
+                    
+                    
+                    drawnow
+                
+    
+               
+    
+    
+                end
                 mask = createMask(shape);
                 pos = shape.Position;
                 % [posx,~,ic] = unique(pos(:,1));
@@ -299,6 +397,49 @@ if isequal(boolbasis,'yes')
             %     pos = shape.Position;
             %     pos = interppolygon(pos,360,'linear');
             %     draw = true;
+
+            elseif isequal(booldraw,'circ')
+                hFig = figure;
+                
+    
+                basisImage = imadjust(im2gray(imread( [imagefiles(end).folder '\' imagefiles(end).name])));
+                crop = basisImage;
+                imshow(crop);
+                shape = drawcircle();
+                txt = text(1,20,'0');
+                hWaitbar = waitbar(0, 'Hit Cancel When Your Drawing Is Good', 'Name', 'Hit Cancel When The Drawing Is Good','CreateCancelBtn','delete(gcbf)');
+                while true
+                    
+    
+                    
+                    if ~ishandle(hWaitbar)
+                        % Stop the if cancel button was pressed
+                        disp('Stopped by user');
+                        break;
+                    else
+                        % Update the wait bar
+                        waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
+                        area = polyarea(shape.Vertices(:,1),shape.Vertices(:,2));
+
+                        set(txt,'String',['Pixel Area: ' num2str(area)]);
+                        
+                    end
+                    
+                    
+                    drawnow
+                
+    
+               
+    
+    
+                end
+
+
+
+                mask = createMask(shape);
+                pos = shape.Vertices;
+                pos = interppolygon(pos,360,'linear');
+                draw = true;
 
 
 
@@ -452,8 +593,8 @@ elseif isequal(thrbool,'auto')
 
 
 end
-figure
-imshow(uint8(mask_image_data(:,:,1)));
+% figure
+% imshow(uint8(mask_image_data(:,:,1)));
 
 mags = ones(1,length(pos(:,1)));
 for posi = 1:length(pos(:,1))
@@ -510,6 +651,8 @@ wellradius_guess = floor(dataOutput_immediate(1,3));
             
             if radii ~= 0 && ~draw
                 linevalues_output = improfile(tiff_stack,[dataOutput_immediate(1,1) dataOutput_immediate(1,1)+(wellradius_guess*cosd(anglevalue))],[dataOutput_immediate(1,2) dataOutput_immediate(1,2)+(wellradius_guess*sind(anglevalue))],num_points);
+                % line([dataOutput_immediate(1,1) dataOutput_immediate(1,1)+(wellradius_guess*cosd(anglevalue))],[dataOutput_immediate(1,2) dataOutput_immediate(1,2)+(wellradius_guess*sind(anglevalue))]);
+
                 % linemin = min(linevalues_output);
                 % linemax = max(linevalues_output);
                 % linevalues_output = linevalues_output/
@@ -1373,6 +1516,7 @@ threshVal = graythresh(image);
 %SHOW ORIGINAL AND THRESHOLDED IMAGES
 threshImage = im2bw(image,threshVal);
 threshWord = strcat('Threshold = ', num2str(threshVal));
+% txt = text(-10,-10,threshWord);
 FigHandle = figure('Position', [100, 100, 1600, 800]);
 subplot(1,2,1), imshow(image);
 subplot(1,2,2), imshow(threshImage), text(-10,-10,threshWord);
@@ -1414,7 +1558,7 @@ button = 1;
         threshImage = im2bw(image,threshVal);
         threshWord = strcat('Threshold = ', num2str(threshVal));
         imshow(threshImage);
-        text(-10, -10, threshWord);
+        text(-10,-10,threshWord);
     end
     close
 end
