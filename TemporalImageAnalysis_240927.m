@@ -487,6 +487,7 @@ elseif draw
     end
     x_cen = mean(pos(:,1));
     y_cen = mean(pos(:,2));
+    center = [x_cen,y_cen];
     radii = 1;
     alphamat = imguidedfilter(single(mask),basis_tiff_stack_crop,'DegreeOfSmoothing',2);
     imshow(uint8(single(basis_tiff_stack_crop).*alphamat))
@@ -934,6 +935,46 @@ else
     fprintf(fileID,numformat,norm_std_vals);
     fprintf(fileID,wordformat,lineplotstd);
     fprintf(fileID,numformat,line_std_vals);
+    fclose(fileID);
+end
+
+
+prompt = 'What position file name do you want? (type none if you dont want an output file): ';
+filename_output = input(prompt,'s');
+
+if isequal(filename_output,'none')
+      
+else
+    % filename_output = input(prompt,'s');
+    % names = ['ROI Position','ROI Center'];
+    % stdnames = names+"std";
+    % normnames = names+"norm";
+    % nstdnames = names+"stdnorm";
+    % lineplotstd = names+"lineplot std"; 
+
+    names = {'ROI x Position', 'ROI y Position'};
+    names = string(names);
+    roicenter = string({'ROI x Center','ROI y Center'});
+    wordformat = string('');
+    numformat = string('');
+
+    for i = 1:length(names)
+        wordformat = wordformat + '%s ';
+    end
+    wordformat = wordformat + '\r\n';
+
+    for i = 1:length(names)
+        numformat = numformat + '%.2f ';
+    end
+    numformat = numformat + '\r\n';
+
+
+    fileID = fopen(filename_output,'w');
+    fprintf(fileID,wordformat,names);
+    fprintf(fileID,numformat,pos);
+    fprintf(fileID,wordformat,roicenter);
+    fprintf(fileID,numformat,center);
+    
     fclose(fileID);
 end
 
