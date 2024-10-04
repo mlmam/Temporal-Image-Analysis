@@ -8,9 +8,9 @@ tic
 %defines image directory
 %set file path to '' if you only want to select images in the folder this
 %code file is in
-%filepath = 'C:\Users\Matthew\University of Michigan Dropbox\Matthew Manion\Temporal-Image-Analysis\Sample Dataset';
-filepath = '';
-imagepath = [filepath  'ConcentricSquare.jpg'];
+filepath = 'C:\Users\mmani\University of Michigan Dropbox\Matthew Manion\Temporal-Image-Analysis\Sample Dataset';
+% filepath = '';
+imagepath = [filepath  '\*.png'];
 imagefiles = dir(imagepath);
 num_images = length(imagefiles);
 
@@ -34,6 +34,7 @@ if isequal(boolbasis,'yes')
     draw = false;
     cir = false;
     rect = false;
+    keletonbool = false;
     drawrect = false;
     prompt = 'do you want to do automatic circle detection? (yes or no): ';
     boolbase = input(prompt,'s');
@@ -327,6 +328,7 @@ if isequal(boolbasis,'yes')
 
                 mask = createMask(shape);
                 pos = shape.Position;
+                % [~,indx,ic] = unique(pos(:,1));
                 pos = interppolygon(pos,360,'linear');
                 draw = true;
             elseif isequal(booldraw,'assist')
@@ -472,8 +474,10 @@ if rect
 
     
     %mask = createMask(r);
-    alphamat = imguidedfilter(single(mask),basis_tiff_stack_crop,'DegreeOfSmoothing',2);
+    alphamat = imguidedfilter(single(mask),basis_tiff_stack_crop,'NeighborhoodSize',[3,3],'DegreeOfSmoothing',2);
+    % alphamat = imguidedfilter(basis_tiff_stack_crop,single(mask));
     imshow(uint8(single(basis_tiff_stack_crop).*alphamat))
+    
     dataOutput_immediate = [center radii];
     %circrect = false;
     cir = false;
@@ -487,6 +491,7 @@ elseif draw
     end
     x_cen = mean(pos(:,1));
     y_cen = mean(pos(:,2));
+    center = [x_cen,y_cen];
     radii = 1;
     alphamat = imguidedfilter(single(mask),basis_tiff_stack_crop,'DegreeOfSmoothing',2);
     imshow(uint8(single(basis_tiff_stack_crop).*alphamat))
@@ -521,6 +526,413 @@ toc
 %defines image directory
 % imagefiles = dir('*.png');
 % num_images = length(imagefiles);
+
+prompt = 'Do you want to make an new ROI centerline?: \nSay no to reuse centerline/skeleton \n(yes or no) ';
+skelbool = input(prompt,'s');
+
+
+if isequal(skelbool,'yes')
+
+    prompt = 'Auto or manual skeleton?: (auto or man) ';
+    bwbool = input(prompt,'s');
+    if isequal(bwbool,'man')
+
+        binaryROI = imbinarize(single(basis_tiff_stack_crop).*mask);
+        alphaROI = single(basis_tiff_stack_crop).*alphamat;
+        [skeleton,minBranch] = imskel(binaryROI);
+        [skeldist,skelidx] = bwdist(~alphaROI);
+        centerToEdge = skeldist .* single(skeleton);
+        skelfig = figure;
+        subplot(2, 2, 1);
+        imshow(uint8(single(basis_tiff_stack_crop).*alphamat), []);
+        fontSize = 20;
+        title('Original Grayscale Image', 'FontSize', fontSize);
+        % Enlarge figure to full screen.
+        set(gcf, 'units','normalized','outerposition',[0 0 1 1]);
+        % Give a name to the title bar.
+        set(gcf,'numbertitle','off') 
+        % fontSize = 20;
+        subplot(2, 2, 2);
+        imshow(skeleton, []);
+        title('Skeletonized Image', 'FontSize', fontSize);
+        subplot(2, 2, 3);
+        imshow(skeldist, []);
+        title('Euclidean Distance Transform', 'FontSize', fontSize);
+        subplot(2, 2, 4);
+        imshow(centerToEdge, []);
+        title('Distance From Edge', 'FontSize', fontSize);
+
+        prompt = 'Do you want to remove skeleton points?: (yes or no) ';
+        skelbool = input(prompt,'s');
+        skeletonbool = true;
+        
+        if isequal(skelbool,'yes')
+            looper = true;
+        end
+        while looper
+        
+            if isequal(skelbool,'yes')
+                
+    
+                hFig = figure;
+                        
+            
+                imshow(skeleton);
+                shape = drawrectangle();
+                txt = text(1,20,'0');
+                hWaitbar = waitbar(0, 'Hit Cancel When Your Rectangle Is Good', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
+                while true
+                    
+        
+                    
+                    if ~ishandle(hWaitbar)
+                        % Stop the if cancel button was pressed
+                        disp('Stopped by user');
+                        break;
+                    else
+                        % Update the wait bar
+                        waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
+                        area = shape.Position(3)*shape.Position(4);
+        
+                        set(txt,'String',['Pixel Area: ' num2str(area)]);
+                        
+                    end
+                    
+                    
+                    drawnow
+                
+        
+               
+        
+        
+                end
+        
+                % mask = createMask(shape);
+                erasepos = shape.Position;
+                x_corne = erasepos(1);
+                y_corne = erasepos(2);
+                wide = erasepos(3);
+                heie = erasepos(4);
+                skeleton = imerase(double(skeleton),[round(x_corne),round(y_corne),round(wide),round(heie)]);
+                close
+                skeleton = logical(skeleton);
+                centerToEdge(~skeleton) =0;
+                subplot(2, 2, 2);
+                imshow(skeleton, []);
+                title('Skeletonized Image', 'FontSize', fontSize);
+                subplot(2, 2, 4);
+                imshow(centerToEdge, []);
+                title('Distance From Edge', 'FontSize', fontSize);
+
+            end
+            prompt = 'Do you want to remove more skeleton points?: (yes or no) ';
+            removebool = input(prompt,'s');
+            if isequal(removebool,'yes')
+                
+            else
+                looper = false;
+            end
+
+
+
+            % x_cen = x_corn + wid/2;
+            % y_cen = y_corn + hei/2;
+            % center = [x_cen,y_cen];
+            % radii = sqrt((x_cen-x_corn)^2+(y_cen-y_corn)^2);
+            % pos = [x_corn,y_corn;x_corn+wid,y_corn;x_corn+wid,y_corn+hei;x_corn,y_corn+hei;x_corn,y_corn];
+            % pos = interppolygon(pos,360,'linear');
+        end
+
+    else
+        binaryROI = (single(basis_tiff_stack_crop).*alphamat);
+        skeleton = bwmorph(binaryROI,'skel',inf);
+        [skeldist,skelidx] = bwdist(~binaryROI);
+        centerToEdge = skeldist .* single(skeleton);
+        skelfig = figure;
+        subplot(2, 2, 1);
+        imshow(uint8(single(basis_tiff_stack_crop).*alphamat), []);
+        fontSize = 20;
+        title('Original Grayscale Image', 'FontSize', fontSize);
+        % Enlarge figure to full screen.
+        set(gcf, 'units','normalized','outerposition',[0 0 1 1]);
+        % Give a name to the title bar.
+        set(gcf,'numbertitle','off') 
+        % fontSize = 20;
+        subplot(2, 2, 2);
+        imshow(skeleton, []);
+        skeleton = logical(skeleton);
+        title('Skeletonized Image', 'FontSize', fontSize);
+        subplot(2, 2, 3);
+        imshow(skeldist, []);
+        title('Euclidean Distance Transform', 'FontSize', fontSize);
+        subplot(2, 2, 4);
+        imshow(centerToEdge, []);
+        title('Distance From Edge', 'FontSize', fontSize);
+
+
+
+        prompt = 'Do you want to remove skeleton points?: (yes or no) ';
+        skelbool = input(prompt,'s');
+        skeletonbool = true;
+        
+        if isequal(skelbool,'yes')
+            looper = true;
+        end
+        while looper
+        
+            if isequal(skelbool,'yes')
+                
+    
+                hFig = figure;
+                        
+            
+                imshow(skeleton);
+                shape = drawrectangle();
+                txt = text(1,20,'0');
+                hWaitbar = waitbar(0, 'Hit Cancel When Your Rectangle Is Good', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
+                while true
+                    
+        
+                    
+                    if ~ishandle(hWaitbar)
+                        % Stop the if cancel button was pressed
+                        disp('Stopped by user');
+                        break;
+                    else
+                        % Update the wait bar
+                        waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
+                        area = shape.Position(3)*shape.Position(4);
+        
+                        set(txt,'String',['Pixel Area: ' num2str(area)]);
+                        
+                    end
+                    
+                    
+                    drawnow
+                
+        
+               
+        
+        
+                end
+        
+                % mask = createMask(shape);
+                erasepos = shape.Position;
+                x_corne = erasepos(1);
+                y_corne = erasepos(2);
+                wide = erasepos(3);
+                heie = erasepos(4);
+                skeleton = imerase(double(skeleton),[round(x_corne),round(y_corne),round(wide),round(heie)]);
+                close
+                skeleton = logical(skeleton);
+                centerToEdge(~skeleton) =0;
+                subplot(2, 2, 2);
+                imshow(skeleton, []);
+                title('Skeletonized Image', 'FontSize', fontSize);
+                subplot(2, 2, 4);
+                imshow(centerToEdge, []);
+                title('Distance From Edge', 'FontSize', fontSize);
+
+            end
+            prompt = 'Do you want to remove more skeleton points?: (yes or no) ';
+            removebool = input(prompt,'s');
+            if isequal(removebool,'yes')
+                
+            else
+                looper = false;
+            end
+        end
+        skeletonbool = true;
+
+    end
+
+else
+
+
+end
+
+prompt = 'Do you want to use the skeleton in the active workspace for line analysis?: (yes or no) ';
+skelbool = input(prompt,'s');
+
+
+if isequal(skelbool,'yes')
+    close
+    skelfig = figure;
+    subplot(2, 2, 1);
+    imshow(uint8(single(basis_tiff_stack_crop).*alphamat), []);
+    fontSize = 20;
+    title('Original Grayscale Image', 'FontSize', fontSize);
+    % Enlarge figure to full screen.
+    set(gcf, 'units','normalized','outerposition',[0 0 1 1]);
+    % Give a name to the title bar.
+    set(gcf,'numbertitle','off') 
+    % fontSize = 20;
+    subplot(2, 2, 2);
+    imshow(skeleton, []);
+    skeleton = logical(skeleton);
+    title('Skeletonized Image', 'FontSize', fontSize);
+    subplot(2, 2, 3);
+    imshow(skeldist, []);
+    title('Euclidean Distance Transform', 'FontSize', fontSize);
+    subplot(2, 2, 4);
+    imshow(centerToEdge, []);
+    title('Distance From Edge', 'FontSize', fontSize);
+    skeletonbool = true;
+
+
+    [srow,scol] = size(skeleton);
+    I = uint16(1:scol);
+    B = zeros(size(skeleton),'uint16');
+    for i =1:srow
+        currRow = I(skeleton(i,:));
+        B(i,1:length(currRow)) = currRow;
+    
+    
+    end
+    numskel = sum(skeleton,'all');
+    spos = zeros(numskel,2);
+    i = 1;
+    rowind = 1;
+    while i <= numskel
+        crow = B(rowind,:);
+        rmask = crow>0;
+        if sum(rmask) > 0
+            spos(i:i+sum(rmask)-1,:) = [crow(rmask)', ones(sum(rmask),1)*rowind];
+            i = i + sum(rmask);
+        end
+        rowind = rowind + 1;
+    
+    
+    end
+    skelends = bwmorph(skeleton,'endpoints');
+    [endcol,endrow] = find(skelends);
+
+    if length(endrow) > 1
+        skelstart = [endrow(1) endcol(1)];
+        skelend = [endrow(2), endcol(2)];
+    else
+        skelstart = [endrow(1) endcol(1)];
+        skelend = skelstart;
+    end
+
+    spos = [spos; spos(1,:)];
+    spos(1,:) = skelstart;
+    
+    yIdx = [1,nan(size(spos(:,2))-1)]; 
+    xyTemp = [spos(:,1), spos(:,2)]; 
+    xyTemp(1,:) = NaN; 
+    idx = [1, nan(1, numel(spos(:,1))-1)]; 
+    counter = 0;
+    
+    while any(isnan(idx))
+        counter = counter+1; 
+        % find closest coordinate to (x(i),y(i)) that isn't already taken
+        [~, idx(counter+1)] = min(pdist2(xyTemp,[spos(idx(counter),1), spos(idx(counter),2)])); 
+        % Eliminate that from the pool
+        xyTemp(idx(counter+1),:) = NaN; 
+    end
+    
+    spos = [spos(idx,1),spos(idx,2)];
+    spos(1,:) = [];
+    
+    % spos = interppolygon(spos,720,'nearest');
+    outerpoints = max(720,length(spos(:,1)));
+    % outerpoints = 720;
+    pos = interppolygon(pos,outerpoints,'linear');
+    nanmask = isnan(pos);
+    if any(nanmask)
+        pos(nanmask) = pos(1,:);
+    end
+    subplot(2, 2, 2);
+    hold on
+    scatter(spos(:,1),spos(:,2));
+    
+    
+    magsmat = zeros(length(spos(:,1)),length(pos(:,1)));
+    for m = 1:length(spos(:,1))
+        for n = 1:length(pos(:,1))
+            magsmat(m,n) = norm(spos(m,:)-pos(n,:));
+    
+    
+    
+        end
+    
+    end
+    [minind,valind] = min(magsmat,[],1);
+    % [~,svalind] = min(magsmat,[],2);
+    %the row number of magsmat is the skeleton point that is closest to the
+    %corresponding valind value
+    % magsmattemp = magsmat;
+    skelline = 0;
+    
+    for i = 1:length(pos(:,1))
+        line([pos(i,1) spos(valind(i),1)],[pos(i,2) spos(valind(i),2)])
+        skelline = skelline + 1;
+        if i == length(pos(:,1))
+             for q = [valind(i),valind(1)]
+                 line([pos(i,1) spos(q,1)],[pos(i,2) spos(q,2)])
+                 skelline = skelline + 1;
+             end
+        else
+            start = min(valind(i),valind(i+1));
+            stop = max(valind(i),valind(i+1));
+            for q = start+1:stop-1
+                line([pos(i,1) spos(q,1)],[pos(i,2) spos(q,2)])
+                skelline = skelline + 1;
+    
+            end
+            
+        end
+        
+    
+    end
+    
+    skelmags = zeros(skelline,1);
+    skellineind = 1;
+    for i = 1:length(pos(:,1))
+        % line([pos(i,1) spos(valind(i),1)],[pos(i,2) spos(valind(i),2)])
+        edgep = [pos(i,1) pos(i,2)];
+        centerp = [spos(valind(i),1) spos(valind(i),2)];
+        skelmags(skellineind) = norm(edgep-centerp);
+        skellineind = skellineind + 1;
+        
+        if i == length(pos(:,1))
+             for q = [valind(i),valind(1)]
+                 % line([pos(i,1) spos(q,1)],[pos(i,2) spos(q,2)])
+                edgep = [pos(i,1) pos(i,2)];
+                centerp = [spos(q,1) spos(q,2)];
+                skelmags(skellineind) = norm(edgep-centerp);
+                skellineind = skellineind + 1;
+                 
+             end
+        else
+            start = min(valind(i),valind(i+1));
+            stop = max(valind(i),valind(i+1));
+            
+            for q = start+1:stop-1
+                % line([pos(i,1) spos(q,1)],[pos(i,2) spos(q,2)])
+                edgep = [pos(i,1) pos(i,2)];
+                centerp = [spos(q,1) spos(q,2)];
+                skelmags(skellineind) = norm(edgep-centerp);
+                skellineind = skellineind + 1;
+                
+    
+            end
+            
+        end
+        
+    
+    end
+    
+    
+    scatter(pos(:,1),pos(:,2));
+else
+    skeletonbool = false;
+
+end
+
+
+
 
 prompt = 'Do you want to threshold your data?: (auto, yes, or no) ';
 thrbool = input(prompt,'s');
@@ -595,30 +1007,86 @@ elseif isequal(thrbool,'auto')
 end
 % figure
 % imshow(uint8(mask_image_data(:,:,1)));
-
-mags = ones(1,length(pos(:,1)));
-for posi = 1:length(pos(:,1))
-    mags(posi,:) = norm(center-pos(posi,:));
-
-
+if skeletonbool
+    mags = skelmags;
+else
+    mags = ones(length(pos(:,1)),1);
+    for posi = 1:length(pos(:,1))
+        mags(posi) = norm(center-pos(posi,:));
+    
+    
+    end
 end
 normmags = mags/max(mags);
 
-if draw
+if draw && ~skeletonbool
+    num_points = round(normmags*900);
+elseif skeletonbool
     num_points = round(normmags*900);
 else
     num_points = 900;
 
 end
 %num_images = 62;
-if draw
+if draw && ~skeletonbool
     num_lines = length(pos(:,1));
+elseif skeletonbool
+    num_lines = skelline;
 else
     num_lines = 360;
 end
 
 
-prompt = 'do you need to generate lineplot data for your images? (yes or no): ';
+basisImage = uint8(single(basis_tiff_stack_crop).*alphamat);
+binaryBasisImage = imbinarize(single(basis_tiff_stack_crop).*alphamat);
+
+prompt = 'Do you want to detect ROI corners? (yes or no): ';
+boolcorner = input(prompt,'s');
+
+if isequal(boolcorner,'yes')
+    prompt = 'Select Algorithm: MinEigen, Harris, ORB, SURF:  ';
+    boolalg = input(prompt,'s');
+    if isequal(boolalg,'MinEigen')
+        corners = detectMinEigenFeatures(binaryBasisImage);
+        cornerPoints = corners.Location;
+        cornerCount = corners.Count;
+        cornerMetric = corners.Metric;
+    elseif isequal(boolalg,'Harris')
+
+        corners = detectHarrisFeatures(binaryBasisImage);
+        cornerPoints = corners.Location;
+        cornerCount = corners.Count;
+        cornerMetric = corners.Metric;
+    elseif isequal(boolalg,'ORB')
+        corners = detectORBFeatures(binaryBasisImage);
+        cornerPoints = corners.Location;
+        cornerCount = corners.Count;
+        cornerMetric = corners.Metric;
+    elseif isequal(boolalg,'SURF')
+        corners = detectSURFFeatures(binaryBasisImage);
+        cornerPoints = corners.Location;
+        cornerCount = corners.Count;
+        cornerMetric = corners.Metric;
+    else
+        corners = detectMinEigenFeatures(binaryBasisImage);
+        cornerPoints = corners.Location;
+        cornerCount = corners.Count;
+        cornerMetric = corners.Metric;
+
+
+    end
+    cornerFig = figure;
+    imshow(binaryBasisImage);
+    hold on;
+    plot(corners.selectStrongest(length(corners)));
+
+else
+
+
+end
+
+
+prompt = 'Do you need to generate lineplot data for your images? (yes or no): ';
 booldata = input(prompt,'s');
 tic
 if isequal(booldata,'yes')
@@ -647,7 +1115,12 @@ wellradius_guess = floor(dataOutput_immediate(1,3));
         end
 
         %mean(tiff_stack,'all')
+        lineind = 1;
         for anglevalue = 0:1:num_lines-1
+
+            if lineind > num_lines
+                break
+            end
             
             if radii ~= 0 && ~draw
                 linevalues_output = improfile(tiff_stack,[dataOutput_immediate(1,1) dataOutput_immediate(1,1)+(wellradius_guess*cosd(anglevalue))],[dataOutput_immediate(1,2) dataOutput_immediate(1,2)+(wellradius_guess*sind(anglevalue))],num_points);
@@ -660,7 +1133,7 @@ wellradius_guess = floor(dataOutput_immediate(1,3));
             % elseif circrect
             %     linevalues_output = improfile(tiff_stack,[dataOutput_immediate(1,1) dataOutput_immediate(1,1)+(wellradius_guess*cosd(anglevalue))],[dataOutput_immediate(1,2) dataOutput_immediate(1,2)+(wellradius_guess*sind(anglevalue))],num_points);
             
-            elseif draw
+            elseif draw && ~skeletonbool
                 linevalues_output = improfile(tiff_stack,[x_cen,pos(anglevalue+1,1)],[y_cen,pos(anglevalue+1,2)],num_points(anglevalue+1));
 
                 fix = length(linevalues_output);
@@ -670,23 +1143,87 @@ wellradius_guess = floor(dataOutput_immediate(1,3));
                     linevalues_output = [linevalues_output; apend];
                 end
                 % line([x_cen,pos(anglevalue+1,1)],[y_cen,pos(anglevalue+1,2)])
+            elseif skeletonbool
+                for i = 1:length(pos(:,1))
+                    % line([pos(i,1) spos(valind(i),1)],[pos(i,2) spos(valind(i),2)])
+                    linevalues_output = improfile(tiff_stack,[pos(i,1) spos(valind(i),1)],[pos(i,2) spos(valind(i),2)],num_points(lineind));
+                    % lineind = lineind + 1;
+                    fix = length(linevalues_output);
+                    fixr = 900-fix;
+                    if fixr > 0
+                        apend = -1*ones(1,fixr)';
+                        linevalues_output = [linevalues_output; apend];
+                    end
+                    if any(isnan(linevalues_output))
+                        nanimask = isnan(linevalues_output);
+                        linevalues_output(nanimask) = 0;
+                    end
+                    linevalues_cumulative(:,lineind,ii) = linevalues_output;
+                    lineind = lineind + 1;
+
+                if i == length(pos(:,1))
+                     for q = [valind(i),valind(1)]
+                         % line([pos(i,1) spos(q,1)],[pos(i,2) spos(q,2)])
+                        linevalues_output = improfile(tiff_stack,[pos(i,1) spos(q,1)],[pos(i,2) spos(q,2)],num_points(lineind));
+                        % lineind = lineind + 1;
+                        fix = length(linevalues_output);
+                        fixr = 900-fix;
+                        if fixr > 0
+                            apend = -1*ones(1,fixr)';
+                            linevalues_output = [linevalues_output; apend];
+                        end
+                        if any(isnan(linevalues_output))
+                            nanimask = isnan(linevalues_output);
+                            linevalues_output(nanimask) = 0;
+                        end
+                        linevalues_cumulative(:,lineind,ii) = linevalues_output;
+                        lineind = lineind + 1;
+                     end
+                else
+                    start = min(valind(i),valind(i+1));
+                    stop = max(valind(i),valind(i+1));
+                    for q = start+1:stop-1
+                    for q = min(valind(i),valind(i+1)):max(valind(i),valind(i+1))
+                        % line([pos(i,1) spos(q,1)],[pos(i,2) spos(q,2)])
+                        linevalues_output = improfile(tiff_stack,[pos(i,1) spos(q,1)],[pos(i,2) spos(q,2)],num_points(lineind));
+                        fix = length(linevalues_output);
+                        fixr = 900-fix;
+                        if fixr > 0
+                            apend = -1*ones(1,fixr)';
+                            linevalues_output = [linevalues_output; apend];
+                        end
+                        if any(isnan(linevalues_output))
+                            nanimask = isnan(linevalues_output);
+                            linevalues_output(nanimask) = 0;
+                        end
+                        linevalues_cumulative(:,lineind,ii) = linevalues_output;
+                        lineind = lineind + 1;
+            
+                    end
+        
+                end
+    
+
+                end
             end
-
-            if any(isnan(linevalues_output))
-                nanimask = isnan(linevalues_output);
-                linevalues_output(nanimask) = 0;
-
-
+            
+            if ~skeletonbool
+                if any(isnan(linevalues_output))
+                    nanimask = isnan(linevalues_output);
+                    linevalues_output(nanimask) = 0;
+    
+    
+                end
+    
+                %colLength = size(linevalues_output());
+        
+                %linevalues_output(numel(linevalues_template)) = 0;
+        
+                %line([dataOutput_immediate(1,1) dataOutput_immediate(1,1)+(wellradius_guess*cosd(anglevalue))],[dataOutput_immediate(1,2) dataOutput_immediate(1,2)+(wellradius_guess*sind(anglevalue))]);
+        
+                %linevalues_cumulative = horzcat([linevalues_cumulative linevalues_output]);
+                linevalues_cumulative(:,anglevalue+1,ii) = linevalues_output;
             end
-
-            %colLength = size(linevalues_output());
-    
-            %linevalues_output(numel(linevalues_template)) = 0;
-    
-            %line([dataOutput_immediate(1,1) dataOutput_immediate(1,1)+(wellradius_guess*cosd(anglevalue))],[dataOutput_immediate(1,2) dataOutput_immediate(1,2)+(wellradius_guess*sind(anglevalue))]);
-    
-            %linevalues_cumulative = horzcat([linevalues_cumulative linevalues_output]);
-            linevalues_cumulative(:,anglevalue+1,ii) = linevalues_output;
     
         end
     end
@@ -857,6 +1394,9 @@ end
 
 
 
+
+
+
 disp("Data Generation Time");
 toc
 %% Plotting & Data Writing
@@ -951,9 +1491,9 @@ else
     % nstdnames = names+"stdnorm";
     % lineplotstd = names+"lineplot std"; 
 
-    names = {'ROI Position'};
+    names = {'ROI x Position', 'ROI y Position'};
     names = string(names);
-    center = string({'ROI Centers'});
+    roicenter = string({'ROI x Center','ROI y Center'});
     wordformat = string('');
     numformat = string('');
 
@@ -971,7 +1511,8 @@ else
     fileID = fopen(filename_output,'w');
     fprintf(fileID,wordformat,names);
     fprintf(fileID,numformat,pos);
-    fprintf(fileID,wordformat,)
+    fprintf(fileID,wordformat,roicenter);
+    fprintf(fileID,numformat,center);
     
     fclose(fileID);
 end
@@ -1627,4 +2168,67 @@ mask_temp = bwmorph(mask_temp, 'close');
 mask_temp = bwareaopen(mask_temp,10); % remove clusters smaller than 10 pixels
 mask = bwmorph(mask_temp, 'spur');
 
+end
+
+
+
+function [threshImage, threshVal] = imskel(image)
+
+%Set inital guess threshold with Otsu method
+% threshVal = graythresh(image);
+threshVal = 0;
+
+%SHOW ORIGINAL AND THRESHOLDED IMAGES
+% threshImage = im2bw(image,threshVal);
+% image = imbinarize(image);
+threshImage = bwskel(image,"MinBranchLength",threshVal);
+% threshImage = bwmorph(image,'skeleton',inf);
+threshWord = strcat('MinBranchLength = ', num2str(threshVal));
+% txt = text(-10,-10,threshWord);
+FigHandle = figure('Position', [100, 100, 1600, 800]);
+subplot(1,2,1), imshow(image);
+subplot(1,2,2), imshow(threshImage), text(-10,-10,threshWord);
+
+%MANUALLY ADJUST THRESHOLD VALUE
+button = 1;
+    while isempty(button) ~= 1
+           
+         [x,y,button] = ginput(1);
+    
+        % arrow keys to adjust threshold value
+        if button == 30 % up arrow
+            threshVal = threshVal + 10;
+            % if threshVal > 1
+            %     threshVal = .99;
+            % end
+        end
+        if button == 31 % down arrow
+            threshVal = threshVal - 10;
+            if threshVal <= 0
+                threshVal = 0;
+            end
+        end
+        if button == 28 % left arrow
+            threshVal = threshVal - 1;
+            if threshVal <= 0
+                threshVal = 0;
+            end
+        end
+        if button == 29 % right arrow
+            threshVal = threshVal + 1;
+            %  if threshVal > 1
+            %     threshVal = .99;
+            % end
+        end
+        
+        threshVal;
+        button;
+        % threshImage = im2bw(image,threshVal);
+        threshImage = bwskel(image,"MinBranchLength",threshVal);
+        % threshImage = bwmorph(image,'skeleton',inf);
+        threshWord = strcat('MinBranchLength = ', num2str(threshVal));
+        imshow(threshImage);
+        text(-10,-10,threshWord);
+    end
+    close
 end
