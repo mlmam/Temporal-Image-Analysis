@@ -866,18 +866,19 @@ if isequal(skelbool,'yes')
     skelline = 0;
     
     for i = 1:length(pos(:,1))
-        line([pos(i,1) spos(valind(i),1)],[pos(i,2) spos(valind(i),2)])
+        % line([pos(i,1) spos(valind(i),1)],[pos(i,2) spos(valind(i),2)])
+        line([spos(valind(i),1) pos(i,1)],[spos(valind(i),2) pos(i,2)])
         skelline = skelline + 1;
         if i == length(pos(:,1))
              for q = [valind(i),valind(1)]
-                 line([pos(i,1) spos(q,1)],[pos(i,2) spos(q,2)])
+                 line([spos(q,1) pos(i,1)],[spos(q,2) pos(i,2)])
                  skelline = skelline + 1;
              end
         else
             start = min(valind(i),valind(i+1));
             stop = max(valind(i),valind(i+1));
             for q = start+1:stop-1
-                line([pos(i,1) spos(q,1)],[pos(i,2) spos(q,2)])
+                line([spos(q,1) pos(i,1)],[spos(q,2) pos(i,2)])
                 skelline = skelline + 1;
 
             end
@@ -1146,7 +1147,10 @@ wellradius_guess = floor(dataOutput_immediate(1,3));
             elseif skeletonbool
                 for i = 1:length(pos(:,1))
                     % line([pos(i,1) spos(valind(i),1)],[pos(i,2) spos(valind(i),2)])
-                    linevalues_output = improfile(tiff_stack,[pos(i,1) spos(valind(i),1)],[pos(i,2) spos(valind(i),2)],num_points(lineind));
+                    %edge to center
+                    % linevalues_output = improfile(tiff_stack,[pos(i,1) spos(valind(i),1)],[pos(i,2) spos(valind(i),2)],num_points(lineind));
+                    %center to edge
+                    linevalues_output = improfile(tiff_stack,[spos(valind(i),1) pos(i,1)],[spos(valind(i),2) pos(i,2)],num_points(lineind));
                     % lineind = lineind + 1;
                     fix = length(linevalues_output);
                     fixr = 900-fix;
@@ -1164,7 +1168,8 @@ wellradius_guess = floor(dataOutput_immediate(1,3));
                 if i == length(pos(:,1))
                      for q = [valind(i),valind(1)]
                          % line([pos(i,1) spos(q,1)],[pos(i,2) spos(q,2)])
-                        linevalues_output = improfile(tiff_stack,[pos(i,1) spos(q,1)],[pos(i,2) spos(q,2)],num_points(lineind));
+                        % linevalues_output = improfile(tiff_stack,[pos(i,1) spos(q,1)],[pos(i,2) spos(q,2)],num_points(lineind));
+                        linevalues_output = improfile(tiff_stack,[spos(q,1) pos(i,1)],[spos(q,2) pos(i,2)],num_points(lineind));
                         % lineind = lineind + 1;
                         fix = length(linevalues_output);
                         fixr = 900-fix;
@@ -1184,7 +1189,8 @@ wellradius_guess = floor(dataOutput_immediate(1,3));
                     stop = max(valind(i),valind(i+1));
                     for q = start+1:stop-1
                         % line([pos(i,1) spos(q,1)],[pos(i,2) spos(q,2)])
-                        linevalues_output = improfile(tiff_stack,[pos(i,1) spos(q,1)],[pos(i,2) spos(q,2)],num_points(lineind));
+                        % linevalues_output = improfile(tiff_stack,[pos(i,1) spos(q,1)],[pos(i,2) spos(q,2)],num_points(lineind));
+                        linevalues_output = improfile(tiff_stack,[spos(q,1) pos(i,1)],[spos(q,2) pos(i,2)],num_points(lineind));
                         fix = length(linevalues_output);
                         fixr = 900-fix;
                         if fixr > 0
