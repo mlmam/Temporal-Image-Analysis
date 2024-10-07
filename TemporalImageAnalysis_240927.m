@@ -8,9 +8,10 @@ tic
 %defines image directory
 %set file path to '' if you only want to select images in the folder this
 %code file is in
-filepath = 'C:\Users\mmani\University of Michigan Dropbox\Matthew Manion\Temporal-Image-Analysis\Sample Dataset';
+filepath = 'C:\Users\mmani\University of Michigan Dropbox\Matthew Manion\Temporal-Image-Analysis';
 % filepath = '';
 imagepath = [filepath  '\*.png'];
+% imagepath = [filepath  '\ConcentricSquare.jpg'];
 imagefiles = dir(imagepath);
 num_images = length(imagefiles);
 
@@ -537,7 +538,7 @@ if isequal(skelbool,'yes')
     bwbool = input(prompt,'s');
     if isequal(bwbool,'man')
 
-        binaryROI = imbinarize(single(basis_tiff_stack_crop).*mask);
+        binaryROI = imbinarize(single(basis_tiff_stack_crop+1).*mask);
         alphaROI = single(basis_tiff_stack_crop).*alphamat;
         [skeleton,minBranch] = imskel(binaryROI);
         [skeldist,skelidx] = bwdist(~alphaROI);
@@ -565,6 +566,7 @@ if isequal(skelbool,'yes')
         prompt = 'Do you want to remove skeleton points?: (yes or no) ';
         skelbool = input(prompt,'s');
         skeletonbool = true;
+        looper = false;
         
         if isequal(skelbool,'yes')
             looper = true;
