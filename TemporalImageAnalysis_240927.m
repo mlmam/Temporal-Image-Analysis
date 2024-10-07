@@ -646,7 +646,7 @@ if isequal(skelbool,'yes')
         end
 
     else
-        binaryROI = (single(basis_tiff_stack_crop).*alphamat);
+        binaryROI = (single(basis_tiff_stack_crop+1).*alphamat);
         skeleton = bwmorph(binaryROI,'skel',inf);
         [skeldist,skelidx] = bwdist(~binaryROI);
         centerToEdge = skeldist .* single(skeleton);
