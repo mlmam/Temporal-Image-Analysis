@@ -541,7 +541,7 @@ if isequal(skelbool,'yes')
         binaryROI = imbinarize(single(basis_tiff_stack_crop+1).*mask);
         alphaROI = single(basis_tiff_stack_crop).*alphamat;
         [skeleton,minBranch] = imskel(binaryROI);
-        [skeldist,skelidx] = bwdist(~alphaROI);
+        [skeldist,skelidx] = bwdist(~binaryROI);
         centerToEdge = skeldist .* single(skeleton);
         skelfig = figure;
         subplot(2, 2, 1);
