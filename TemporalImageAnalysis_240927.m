@@ -540,12 +540,13 @@ if isequal(skelbool,'yes')
 
         binaryROI = imbinarize(single(basis_tiff_stack_crop+1).*mask);
         alphaROI = single(basis_tiff_stack_crop).*alphamat;
-        [skeleton,minBranch] = imskel(binaryROI);
+        [skeleton,minBranch,zoomBounds] = imskel(binaryROI);
         [skeldist,skelidx] = bwdist(~binaryROI);
         centerToEdge = skeldist .* single(skeleton);
         skelfig = figure;
         subplot(2, 2, 1);
-        imshow(uint8(single(basis_tiff_stack_crop).*alphamat), []);
+        dispimage = uint8(single(basis_tiff_stack_crop).*alphamat);
+        imshow(dispimage(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2)), []);
         fontSize = 20;
         title('Original Grayscale Image', 'FontSize', fontSize);
         % Enlarge figure to full screen.
@@ -554,13 +555,13 @@ if isequal(skelbool,'yes')
         set(gcf,'numbertitle','off') 
         % fontSize = 20;
         subplot(2, 2, 2);
-        imshow(skeleton, []);
+        imshow(skeleton(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2)), []);
         title('Skeletonized Image', 'FontSize', fontSize);
         subplot(2, 2, 3);
-        imshow(skeldist, []);
+        imshow(skeldist(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2)), []);
         title('Euclidean Distance Transform', 'FontSize', fontSize);
         subplot(2, 2, 4);
-        imshow(centerToEdge, []);
+        imshow(centerToEdge(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2)), []);
         title('Distance From Edge', 'FontSize', fontSize);
 
         prompt = 'Do you want to remove skeleton points?: (yes or no) ';
@@ -579,7 +580,7 @@ if isequal(skelbool,'yes')
                 hFig = figure;
                         
             
-                imshow(skeleton);
+                imshow(skeleton(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2)));
                 shape = drawrectangle();
                 txt = text(1,20,'0');
                 hWaitbar = waitbar(0, 'Hit Cancel When Your Rectangle Is Good', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
@@ -620,10 +621,10 @@ if isequal(skelbool,'yes')
                 skeleton = logical(skeleton);
                 centerToEdge(~skeleton) =0;
                 subplot(2, 2, 2);
-                imshow(skeleton, []);
+                imshow(skeleton(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2)), []);
                 title('Skeletonized Image', 'FontSize', fontSize);
                 subplot(2, 2, 4);
-                imshow(centerToEdge, []);
+                imshow(centerToEdge(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2)), []);
                 title('Distance From Edge', 'FontSize', fontSize);
 
             end
@@ -650,9 +651,24 @@ if isequal(skelbool,'yes')
         skeleton = bwmorph(binaryROI,'skel',inf);
         [skeldist,skelidx] = bwdist(~binaryROI);
         centerToEdge = skeldist .* single(skeleton);
+
+        [srow,scol] = size(binaryROI);
+        % [lrow,lcol] = find(image,1,'last');
+        colvals = sum(binaryROI,1);
+        rowvals = sum(binaryROI,2);
+        [lrow,~] = find(rowvals,1,'last');
+        [~,lcol] = find(colvals,1,'last');
+        % [frow,fcol] = find(image,1,'first');
+        [frow,~] = find(rowvals,1);
+        [~,fcol] = find(colvals,1);
+        % [k] = find(threshWord,1,'last');
+        pad = 50;
+        zoomBounds = [max(1,frow-pad),max(1,fcol-pad);min(lrow+pad,srow),min(lcol+pad,scol)];
+
         skelfig = figure;
         subplot(2, 2, 1);
-        imshow(uint8(single(basis_tiff_stack_crop).*alphamat), []);
+        dispimage = uint8(single(basis_tiff_stack_crop).*alphamat);
+        imshow(dispimage(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2)), []);
         fontSize = 20;
         title('Original Grayscale Image', 'FontSize', fontSize);
         % Enlarge figure to full screen.
@@ -661,14 +677,14 @@ if isequal(skelbool,'yes')
         set(gcf,'numbertitle','off') 
         % fontSize = 20;
         subplot(2, 2, 2);
-        imshow(skeleton, []);
+        imshow(skeleton(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2)), []);
         skeleton = logical(skeleton);
         title('Skeletonized Image', 'FontSize', fontSize);
         subplot(2, 2, 3);
-        imshow(skeldist, []);
+        imshow(skeldist(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2)), []);
         title('Euclidean Distance Transform', 'FontSize', fontSize);
         subplot(2, 2, 4);
-        imshow(centerToEdge, []);
+        imshow(centerToEdge(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2)), []);
         title('Distance From Edge', 'FontSize', fontSize);
 
 
@@ -688,7 +704,7 @@ if isequal(skelbool,'yes')
                 hFig = figure;
                         
             
-                imshow(skeleton);
+                imshow(skeleton(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2)));
                 shape = drawrectangle();
                 txt = text(1,20,'0');
                 hWaitbar = waitbar(0, 'Hit Cancel When Your Rectangle Is Good', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
@@ -729,10 +745,10 @@ if isequal(skelbool,'yes')
                 skeleton = logical(skeleton);
                 centerToEdge(~skeleton) =0;
                 subplot(2, 2, 2);
-                imshow(skeleton, []);
+                imshow(skeleton(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2)), []);
                 title('Skeletonized Image', 'FontSize', fontSize);
                 subplot(2, 2, 4);
-                imshow(centerToEdge, []);
+                imshow(centerToEdge(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2)), []);
                 title('Distance From Edge', 'FontSize', fontSize);
 
             end
@@ -761,7 +777,9 @@ if isequal(skelbool,'yes')
     close
     skelfig = figure;
     subplot(2, 2, 1);
-    imshow(uint8(single(basis_tiff_stack_crop).*alphamat), []);
+    dispimage = uint8(single(basis_tiff_stack_crop).*alphamat);
+    % imshow(dispimage(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2)), []);
+    imshow(dispimage, []);
     fontSize = 20;
     title('Original Grayscale Image', 'FontSize', fontSize);
     % Enlarge figure to full screen.
@@ -770,22 +788,25 @@ if isequal(skelbool,'yes')
     set(gcf,'numbertitle','off') 
     % fontSize = 20;
     subplot(2, 2, 2);
+    % imshow(skeleton(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2)), []);
     imshow(skeleton, []);
     skeleton = logical(skeleton);
     title('Skeletonized Image', 'FontSize', fontSize);
     subplot(2, 2, 3);
+    % imshow(skeldist(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2)), []);
     imshow(skeldist, []);
     title('Euclidean Distance Transform', 'FontSize', fontSize);
     subplot(2, 2, 4);
+    % imshow(centerToEdge(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2)), []);
     imshow(centerToEdge, []);
     title('Distance From Edge', 'FontSize', fontSize);
     skeletonbool = true;
 
 
-    [srow,scol] = size(skeleton);
-    I = uint16(1:scol);
+    [skrow,skcol] = size(skeleton);
+    I = uint16(1:skcol);
     B = zeros(size(skeleton),'uint16');
-    for i =1:srow
+    for i =1:skrow
         currRow = I(skeleton(i,:));
         B(i,1:length(currRow)) = currRow;
     
@@ -806,6 +827,19 @@ if isequal(skelbool,'yes')
     
     
     end
+
+    colvals = sum(skeleton,1);
+    rowvals = sum(skeleton,2);
+    [lrow,~] = find(rowvals,1,'last');
+    [~,lcol] = find(colvals,1,'last');
+    % [frow,fcol] = find(image,1,'first');
+    [frow,~] = find(rowvals,1);
+    [~,fcol] = find(colvals,1);
+    % [k] = find(threshWord,1,'last');
+    % pad = 50;
+    endrow = [frow,lrow];
+    endcol = [lrow,lcol];
+
     skelends = bwmorph(skeleton,'endpoints');
     [endcol,endrow] = find(skelends);
 
@@ -838,8 +872,9 @@ if isequal(skelbool,'yes')
     spos(1,:) = [];
     
     % spos = interppolygon(spos,720,'nearest');
-    outerpoints = max(720,length(spos(:,1)));
-    % outerpoints = 720;
+    % outerpoints = max(720,length(spos(:,1)));
+    outerpoints = 720;
+    % outerpoints = 
     pos = interppolygon(pos,outerpoints,'linear');
     nanmask = isnan(pos);
     if any(nanmask)
@@ -1041,8 +1076,9 @@ end
 
 
 basisImage = uint8(single(basis_tiff_stack_crop).*alphamat);
-binaryBasisImage = imbinarize(single(basis_tiff_stack_crop).*alphamat);
-
+% binaryBasisImage = imbinarize(single(basis_tiff_stack_crop).*alphamat);
+binaryBasisImage = mask;
+disp('Warning: Corner Detection Only Works with Polygons')
 prompt = 'Do you want to detect ROI corners? (yes or no): ';
 boolcorner = input(prompt,'s');
 
@@ -2179,7 +2215,7 @@ end
 
 
 
-function [threshImage, threshVal] = imskel(image)
+function [threshImage, threshVal,zoomExtent] = imskel(image)
 
 %Set inital guess threshold with Otsu method
 % threshVal = graythresh(image);
@@ -2193,8 +2229,22 @@ threshImage = bwskel(image,"MinBranchLength",threshVal);
 threshWord = strcat('MinBranchLength = ', num2str(threshVal));
 % txt = text(-10,-10,threshWord);
 FigHandle = figure('Position', [100, 100, 1600, 800]);
-subplot(1,2,1), imshow(image);
-subplot(1,2,2), imshow(threshImage), text(-10,-10,threshWord);
+[srow,scol] = size(image);
+% [lrow,lcol] = find(image,1,'last');
+colvals = sum(image,1);
+rowvals = sum(image,2);
+[lrow,~] = find(rowvals,1,'last');
+[~,lcol] = find(colvals,1,'last');
+% [frow,fcol] = find(image,1,'first');
+[frow,~] = find(rowvals,1);
+[~,fcol] = find(colvals,1);
+% [k] = find(threshWord,1,'last');
+pad = 50;
+zoomExtent = [max(1,frow-pad),max(1,fcol-pad);min(lrow+pad,srow),min(lcol+pad,scol)];
+
+subplot(1,2,1), imshow(image(max(1,frow-pad):min(lrow+pad,srow),max(1,fcol-pad):min(lcol+pad,scol)));
+subplot(1,2,2), imshow(threshImage(max(1,frow-pad):min(lrow+pad,srow),max(1,fcol-pad):min(lcol+pad,scol))), text(-20,-20,threshWord);
+
 
 %MANUALLY ADJUST THRESHOLD VALUE
 button = 1;
@@ -2234,8 +2284,8 @@ button = 1;
         threshImage = bwskel(image,"MinBranchLength",threshVal);
         % threshImage = bwmorph(image,'skeleton',inf);
         threshWord = strcat('MinBranchLength = ', num2str(threshVal));
-        imshow(threshImage);
-        text(-10,-10,threshWord);
+        imshow(threshImage(max(1,frow-pad):min(lrow+pad,srow),max(1,fcol-pad):min(lcol+pad,scol)));
+        text(-20,-20,threshWord);
     end
     close
 end
