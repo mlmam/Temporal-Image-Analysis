@@ -39,7 +39,7 @@ if isequal(boolbasis,'yes')
     drawrect = false;
     prompt = 'do you want to do automatic circle detection? (yes or no): ';
     boolbase = input(prompt,'s');
-    if isequal(boolbase, 'yes');
+    if isequal(boolbase, 'yes')
         centers = zeros(basismax-1,2);
         radiis = zeros(basismax-1,1);
         basisindex = zeros(basismax-1,1);
@@ -1124,8 +1124,18 @@ if isequal(boolcorner,'yes')
 
 
     end
-    cornerFig = figure;
+    cornerFig = tiledlayout(2,2);
+    cornerFig.Padding = 'compact';
+    cornerFig.TileSpacing = 'compact';
+
+    nexttile
+    imshow(basisImage)
+    fontSize = 20;
+    title('Image ROI','FontSize',fontSize);
+    nexttile
+    % subplot(1,3,1);
     imshow(binaryBasisImage);
+    title('Identified Corner, Edge, & Center','FontSize',fontSize);
     hold on;
     if scorebool
         plot(corners1.selectStrongest(length(corners1)));
@@ -1136,14 +1146,14 @@ if isequal(boolcorner,'yes')
     else
         prompt = input('How many corners are you expecting: ','s');
         strongCorner = corners.selectStrongest(str2double(prompt));
-        strongCorners = strongCorner.Location;
+        strongCorners = round(strongCorner.Location);
         % plot(corners.selectStrongest(str2double(prompt)));
         plot(corners.selectStrongest(length(corners)));
     end
     cornerCounts = strcat('Corner Num = ', num2str(cornerCount));
-    text(-20,-20,cornerCounts);
+    % text(-50,-50,cornerCounts);
     [corow,cocol] = size(strongCorners);
-    midpoints = zeros(100,cocol);
+    % midpoints = zeros(100,cocol);
 
     xcombo = combinations(strongCorners(:,1),strongCorners(:,1));
     xcombo = table2array(xcombo);
@@ -1173,20 +1183,31 @@ if isequal(boolcorner,'yes')
         midmask = sum(midpoints,2) == 0;
         midpoints(midmask,:) = [];
     end
-    if any(sum(midpoints,2) == sum([mean(midpoints(:,1)),mean(midpoints(:,2))]))
-        centermask = sum(midpoints,2) == sum([mean(midpoints(:,1)),mean(midpoints(:,2))]);
+    if any(sum(midpoints,2) == sum([round(mean(midpoints(:,1))),round(mean(midpoints(:,2)))]))
+        centermask = sum(midpoints,2) == sum([round(mean(midpoints(:,1))),round(mean(midpoints(:,2)))]);
         midpoints(centermask,:) = [];
 
     end
-    center = [mean(midpoints(:,1)),mean(midpoints(:,2))];
-    scatter(midpoints(:,1),midpoints(:,2));
-    scatter(center(1),center(2),'b');
-    
+    center = [round(mean(midpoints(:,1))),round(mean(midpoints(:,2)))];
+    text(center(1)-200,center(2)+200,cornerCounts);
 
-    gridPoints = 100;
-    xp = round(linspace(min(xcombo,[],'all'),max(xcombo,[],'all'),100));
-    yp = round(linspace(min(ycombo,[],'all'),max(ycombo,[],'all'),100));
-    [X,Y] = meshgrid(xp,yp);
+    scatter(midpoints(:,1),midpoints(:,2),'r','filled');
+    scatter(center(1),center(2),'b','filled');
+    
+    if rect
+        gridPoints = 100;
+        xp = round(linspace(min(xcombo,[],'all'),max(xcombo,[],'all'),100));
+        yp = round(linspace(min(ycombo,[],'all'),max(ycombo,[],'all'),100));
+        [X,Y] = meshgrid(xp,yp);
+    else
+        % polytest = polygrid(pos(:,1),pos(:,2),0.000224871879); %gives 100 total points
+        polytest = polygrid(pos(:,1),pos(:,2),0.005);
+        xp = round(polytest(:,1));
+        yp = round(polytest(:,2));
+        [X,Y] = meshgrid(xp,yp);
+    end
+    % figure
+    % scatter(xp,yp)
     % plot(X,Y,'.r')
     % hold off
     [Xr,Xc] = size(X);
@@ -1199,7 +1220,11 @@ if isequal(boolcorner,'yes')
         for n = 1:length(midMags(:,1,1))
     
             for m = 1:length(midMags(1,:,1))
-                midMags(n,m,q) = norm([X(n,m),Y(n,m)] - midpoints(q,:));
+                if [X(n,m),Y(n,m)] - midpoints(q,:) == 0
+                    midMags(n,m,q) = 0;
+                else
+                    midMags(n,m,q) = norm([X(n,m),Y(n,m)] - midpoints(q,:));
+                end
     
             end
     
@@ -1213,7 +1238,11 @@ if isequal(boolcorner,'yes')
         for n = 1:length(cornerMags(:,1,1))
     
             for m = 1:length(cornerMags(1,:,1))
-                cornerMags(n,m,q) = norm([X(n,m),Y(n,m)] - strongCorners(q,:));
+                if [X(n,m),Y(n,m)] - strongCorners(q,:) == 0
+                    cornerMags(n,m,q) = 0;
+                else
+                    cornerMags(n,m,q) = norm([X(n,m),Y(n,m)] - strongCorners(q,:));
+                end
     
             end
     
@@ -1227,7 +1256,11 @@ if isequal(boolcorner,'yes')
         for n = 1:length(centerMags(:,1,1))
     
             for m = 1:length(centerMags(1,:,1))
-                centerMags(n,m,q) = norm([X(n,m),Y(n,m)] - center(q,:));
+                if [X(n,m),Y(n,m)] - center(q,:) == 0
+                    centerMags(n,m,q) = 0;
+                else
+                    centerMags(n,m,q) = norm([X(n,m),Y(n,m)] - center(q,:));
+                end
     
             end
     
@@ -1236,14 +1269,114 @@ if isequal(boolcorner,'yes')
 
     end
 
-    cornerMags = mean(cornerMags,3);
-    midMags = mean(midMags,3);
+    cornerMags = min(cornerMags,[],3);
+    midMags = min(midMags,[],3);
+    imidMags = 1./(midMags);
+    icornerMags = 1./(cornerMags);
+    icenterMags = 1./(centerMags);
+    imidMags(imidMags == Inf) = 0;
+    icornerMags(icornerMags == Inf) = 0;
+    icenterMags(icenterMags == Inf) = 0;
+    midMax = max(imidMags,[],'all');
+    cornerMax = max(icornerMags,[],'all');
+    centerMax = max(icenterMags,[],'all');
+    imidMags(imidMags == 0) = midMax;
+    icornerMags(icornerMags == 0) = cornerMax;
+    icenterMags(icenterMags == 0) = centerMax;
 
-    rgb = uint8(cat(3,midMags,cornerMags,centerMags));
-    heatFig = figure;
+
+    A = cat(3,imidMags,icornerMags,icenterMags);
+    Amax = max(A,[],3);
+    nMidMags = imidMags;
+    nCornerMags = icornerMags;
+    nCenterMags = icenterMags;
+
+    for n = 1:Xr
+
+        for m = 1:Xc
+            nMidMags(n,m) = imidMags(n,m)/Amax(n,m)*255;
+            nCornerMags(n,m) = icornerMags(n,m)/Amax(n,m)*255;
+            nCenterMags(n,m) = icenterMags(n,m)/Amax(n,m)*255;
+
+        end
+    end
+
+    % absmax = max([midMax,cornerMax,centerMax]);
+    % nMidMags = imidMags./absmax.*255;
+    % nCornerMags = icornerMags./absmax.*255;
+    % nCenterMags = icenterMags./absmax.*255;
+
+    c = uint8(cat(3,nMidMags,nCornerMags,nCenterMags));
+
+    rgb = zeros(length(nMidMags),3);
+
+    for i = 1:Xr*Xc
+        rgb(i,:) = [nMidMags(i),nCornerMags(i),nCenterMags(i)];
+    end
+
+    % heatFig = figure;
     % imshow(mask);
     % hold on
-    hmo = HeatMap(X,'Color,rgb);
+    % pcolor(X,Y,rgb)
+    % Xvec = reshape(X,1,[])';
+    % Yvec = reshape(Y,1,[])';
+    % Xvecd = Xvec(1:100:end);
+    % Yvecd = Yvec(1:100:end);
+    % rgbd = rgb(1:100:end,:);
+    % scatter(Xvecd,Yvecd,[],rgbd)
+    % set(gcf,'Renderer','painters')
+    Z = ones(size(X));
+    % subplot(1,3,2);
+    nexttile
+    % heatm = surf(X,Y,Z,c,'EdgeColor','interp','FaceColor','interp');
+    imshow(c)
+    title('ROI Point Classification','FontSize',fontSize);
+    subtitle('Red = Edge, Green = Corner, Blue = Center','FontSize',fontSize);
+    % view(-90,90)
+    % direction = [0 0 1];
+    % rotate(heatm,direction,90)
+
+
+    r2 = zeros(size(X));
+    g2 = r2;
+    b2 = r2; 
+    for n = 1:length(X(:,1))
+
+        for m = 1:length(X(1,:))
+            
+            if midMags(n,m) < cornerMags(n,m) && centerMags(n,m) > midMags(n,m)
+                % r2(n,m) = max([nMidMags(n,m),nCornerMags(n,m),nCenterMags(n,m)]);
+                r2(n,m) = 255;
+                g2(n,m) = 0;
+                b2(n,m) = 0;
+            elseif midMags(n,m) > cornerMags(n,m) && centerMags(n,m) > cornerMags(n,m)
+                r2(n,m) = 0;
+                % g2(n,m) = max([nMidMags(n,m),nCornerMags(n,m),nCenterMags(n,m)]);
+                g2(n,m) = 255;
+                b2(n,m) = 0;
+            else
+                r2(n,m) = 0;
+                g2(n,m) = 0;
+                % b2(n,m) = max([nMidMags(n,m),nCornerMags(n,m),nCenterMags(n,m)]);
+                b2(n,m) = 255;
+            end
+
+
+        end
+
+    end
+    c2 = cat(3,r2,g2,b2);
+
+
+    % heatFig2 = figure;
+    % subplot(1,3,3);
+    nexttile
+    imshow(c2)
+    title('Thresholded ROI Point Classification','FontSize',fontSize);
+    subtitle('Red = Edge, Green = Corner, Blue = Center')
+    % heatm2 = surf(X,Y,Z,c2,'EdgeColor','interp','FaceColor','interp');
+    % view(2)
+
 
 
 
@@ -1264,7 +1397,7 @@ if isequal(booldata,'yes')
 linevalues_cumulative = zeros(max(num_points),num_lines,num_images);
 wellradius_guess = floor(dataOutput_immediate(1,3));
 
-
+ 
 
 
     for ii = 1:num_images
@@ -2417,4 +2550,42 @@ button = 1;
         text(-20,-20,threshWord);
     end
     close
+end
+
+%inPoints = getPolygonGrid(xv,yv,ppa) returns points that are within a 
+%concave or convex polygon using the inpolygon function.
+
+%xv and yv are columns representing the vertices of the polygon, as used in
+%the Matlab function inpolygon
+
+%ppa refers to the points per unit area you would like inside the polygon. 
+%Here unit area refers to a 1.0 X 1.0 square in the axes. 
+
+%Example: 
+% L = linspace(0,2.*pi,6); xv = cos(L)';yv = sin(L)'; %from the inpolygon documentation
+% inPoints = getPolygonGrid(xv, yv, 10^5)
+% plot(inPoints(:, 1),inPoints(:,2), '.k');
+
+function [inPoints] = polygrid( xv, yv, ppa)
+
+	N = sqrt(ppa);
+%Find the bounding rectangle
+	lower_x = min(xv);
+	higher_x = max(xv);
+
+	lower_y = min(yv);
+	higher_y = max(yv);
+%Create a grid of points within the bounding rectangle
+	inc_x = 1/N;
+	inc_y = 1/N;
+	
+	interval_x = lower_x:inc_x:higher_x;
+	interval_y = lower_y:inc_y:higher_y;
+	[bigGridX, bigGridY] = meshgrid(interval_x, interval_y);
+	
+%Filter grid to get only points in polygon
+	in = inpolygon(bigGridX(:), bigGridY(:), xv, yv);
+%Return the co-ordinates of the points that are in the polygon
+	inPoints = [bigGridX(in), bigGridY(in)];
+
 end
