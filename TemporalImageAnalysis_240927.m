@@ -28,6 +28,10 @@ radius_mm = 3;
 
 countt = 1;
 
+if exist('pos_o','var')
+    pos = pos_o;
+end
+
 prompt = 'do you need a basis image & circle + radius? (yes or no): ';
 boolbasis = input(prompt,'s');
 i = 1;
@@ -581,7 +585,7 @@ if isequal(skelbool,'yes')
                         
             
                 imshow(skeleton(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2)));
-                shape = drawrectangle();
+                erashape = drawrectangle();
                 txt = text(1,20,'0');
                 hWaitbar = waitbar(0, 'Hit Cancel When Your Rectangle Is Good', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
                 while true
@@ -595,7 +599,7 @@ if isequal(skelbool,'yes')
                     else
                         % Update the wait bar
                         waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
-                        area = shape.Position(3)*shape.Position(4);
+                        area = erashape.Position(3)*erashape.Position(4);
         
                         set(txt,'String',['Pixel Area: ' num2str(area)]);
                         
@@ -611,15 +615,15 @@ if isequal(skelbool,'yes')
                 end
         
                 % mask = createMask(shape);
-                erasepos = shape.Position;
+                erasepos = erashape.Position;
                 x_corne = erasepos(1);
                 y_corne = erasepos(2);
                 wide = erasepos(3);
                 heie = erasepos(4);
-                skeleton = imerase(double(skeleton),[round(x_corne),round(y_corne),round(wide),round(heie)]);
+                skeleton(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2)) = imerase(double(skeleton(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2))),[round(x_corne),round(y_corne),round(wide),round(heie)]);
                 close
                 skeleton = logical(skeleton);
-                centerToEdge(~skeleton) =0;
+                centerToEdge(~skeleton) = 0;
                 subplot(2, 2, 2);
                 imshow(skeleton(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2)), []);
                 title('Skeletonized Image', 'FontSize', fontSize);
@@ -705,7 +709,7 @@ if isequal(skelbool,'yes')
                         
             
                 imshow(skeleton(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2)));
-                shape = drawrectangle();
+                erashape = drawrectangle();
                 txt = text(1,20,'0');
                 hWaitbar = waitbar(0, 'Hit Cancel When Your Rectangle Is Good', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
                 while true
@@ -719,7 +723,7 @@ if isequal(skelbool,'yes')
                     else
                         % Update the wait bar
                         waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
-                        area = shape.Position(3)*shape.Position(4);
+                        area = erashape.Position(3)*erashape.Position(4);
         
                         set(txt,'String',['Pixel Area: ' num2str(area)]);
                         
@@ -735,12 +739,12 @@ if isequal(skelbool,'yes')
                 end
         
                 % mask = createMask(shape);
-                erasepos = shape.Position;
+                erasepos = erashape.Position;
                 x_corne = erasepos(1);
                 y_corne = erasepos(2);
                 wide = erasepos(3);
                 heie = erasepos(4);
-                skeleton = imerase(double(skeleton),[round(x_corne),round(y_corne),round(wide),round(heie)]);
+                skeleton(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2)) = imerase(double(skeleton(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2))),[round(x_corne),round(y_corne),round(wide),round(heie)]);
                 close
                 skeleton = logical(skeleton);
                 centerToEdge(~skeleton) =0;
@@ -774,7 +778,7 @@ skelbool = input(prompt,'s');
 
 
 if isequal(skelbool,'yes')
-    close
+    % close
     skelfig = figure;
     subplot(2, 2, 1);
     dispimage = uint8(single(basis_tiff_stack_crop).*alphamat);
@@ -875,6 +879,7 @@ if isequal(skelbool,'yes')
     % outerpoints = max(720,length(spos(:,1)));
     outerpoints = 720;
     % outerpoints = 
+    pos_o = pos;
     pos = interppolygon(pos,outerpoints,'linear');
     nanmask = isnan(pos);
     if any(nanmask)
@@ -883,6 +888,62 @@ if isequal(skelbool,'yes')
     subplot(2, 2, 2);
     hold on
     scatter(spos(:,1),spos(:,2));
+    scatter(pos(:,1),pos(:,2));
+
+
+    prompt = input('Do you want to remove any polygon points from analysis?: (yes/no)','s');
+    if isequal(prompt,'yes')
+        button = 1;
+        looper = true;
+        hWaitbar = waitbar(0, 'Hit Cancel When Done', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
+        % erashape = drawrectangle();
+        while true
+            erashape = drawrectangle();
+            if ~ishandle(hWaitbar)
+                    % Stop the if cancel button was pressed
+                    disp('Stopped by user');
+                    break;
+            else
+                waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
+                % [xcen,ycen,button] = ginput(1);
+                % if button == 3
+                %     continue
+                % end
+                % clicked_point = [xcen,ycen];
+                % closest_point = [NaN, NaN];
+                % minDist = Inf;
+                % for idx = 1:length(pos(:,1))
+                %     if norm(clicked_point - pos(idx,:)) < minDist
+                %         minDist = norm(clicked_point - pos(idx,:));
+                %         closest_point = pos(idx,:);
+                %     end
+                % end
+                erasepos = erashape.Position;
+                x_corne = erasepos(1);
+                y_corne = erasepos(2);
+                wide = erasepos(3);
+                heie = erasepos(4);
+                rectt = [x_corne,y_corne;x_corne+wide,y_corne;x_corne+wide,y_corne+heie;x_corne,y_corne+heie;x_corne,y_corne];
+                [in,on] = inpolygon(pos(:,1),pos(:,2),rectt(:,1),rectt(:,2));
+
+                
+                pos(in,:) = [];
+                % center = [center;closest_point];
+                % pos(sum(pos,2)==sum(closest_point),:) = [];
+                hold off
+                imshow(skeleton, []);
+                hold on
+                scatter(pos(:,1),pos(:,2),'r','filled');
+                
+                % scatter(center(:,1),center(:,2),'b','filled');
+
+            end
+            drawnow
+        end
+
+
+    end
+
     
     
     magsmat = zeros(length(spos(:,1)),length(pos(:,1)));
@@ -1124,9 +1185,12 @@ if isequal(boolcorner,'yes')
 
 
     end
-    cornerFig = tiledlayout(2,2);
-    cornerFig.Padding = 'compact';
-    cornerFig.TileSpacing = 'compact';
+    CornerFig = figure;
+    tl = tiledlayout(2,2);
+    tl.Padding = 'compact';
+    tl.TileSpacing = 'compact';
+    set(gcf, 'units','normalized','outerposition',[0 0 1 1]);
+    
 
     nexttile
     imshow(basisImage)
@@ -1144,11 +1208,18 @@ if isequal(boolcorner,'yes')
         plot(corners3.selectStrongest(length(corners3)));
         plot(corners4.selectStrongest(length(corners4)));
     else
-        prompt = input('How many corners are you expecting: ','s');
-        strongCorner = corners.selectStrongest(str2double(prompt));
-        strongCorners = round(strongCorner.Location);
-        % plot(corners.selectStrongest(str2double(prompt)));
-        plot(corners.selectStrongest(length(corners)));
+        prompt = input('How many corners are you expecting (a integer or many): ','s');
+        if isequal(prompt,'many')
+            strongCorner = corners.selectStrongest(length(corners));
+            strongCorners = round(strongCorner.Location);
+            plot(strongCorner)
+        else
+            strongCorner = corners.selectStrongest(str2double(prompt));
+            strongCorners = round(strongCorner.Location);
+            % plot(corners.selectStrongest(str2double(prompt)));
+            plot(corners.selectStrongest(str2double(prompt)));
+        end
+        
     end
     cornerCounts = strcat('Corner Num = ', num2str(cornerCount));
     % text(-50,-50,cornerCounts);
@@ -1182,24 +1253,344 @@ if isequal(boolcorner,'yes')
         midpoints(centermask,:) = [];
 
     end
-    center = [round(mean(midpoints(:,1))),round(mean(midpoints(:,2)))];
-    text(center(1)-200,center(2)+200,cornerCounts);
+    midinds = inpolygon(midpoints(:,1),midpoints(:,2),pos(:,1),pos(:,2));
+    midpoints = midpoints(midinds,:);
 
-    scatter(midpoints(:,1),midpoints(:,2),'r','filled');
-    scatter(center(1),center(2),'b','filled');
+    center = [round(mean(midpoints(:,1))),round(mean(midpoints(:,2)))];
+    
+
+    
     
     if rect
         gridPoints = 100;
         xp = round(linspace(min(xcombo,[],'all'),max(xcombo,[],'all'),100));
         yp = round(linspace(min(ycombo,[],'all'),max(ycombo,[],'all'),100));
         [X,Y] = meshgrid(xp,yp);
+        text(center(1)-200,center(2)+200,cornerCounts);
+        
     else
         % polytest = polygrid(pos(:,1),pos(:,2),0.000224871879); %gives 100 total points
-        polytest = polygrid(pos(:,1),pos(:,2),0.005);
+        polytest = polygrid(pos(:,1),pos(:,2),0.004);
         xp = round(polytest(:,1));
         yp = round(polytest(:,2));
+        polyind = inpolygon(xp,yp,pos(:,1),pos(:,2));
+        xp = xp(polyind);
+        yp = yp(polyind);
         [X,Y] = meshgrid(xp,yp);
+        center = spos(1:30:end,:);
+
+        [sortmags,vind] = sort(magsmat,1);
+        magsmat2 = zeros(length(pos(:,1)),length(strongCorners(:,1)));
+        midsmat = zeros(length(midpoints(:,1)),length(strongCorners(:,1)));
+        
+        % midthresh = min(norm(strongCorners(1,:)-midpoints(1,:)));
+
+        for i = 1:length(midpoints(:,1))
+
+            for n=1:length(strongCorners(:,1))
+
+                midsmat(i,n) = norm(strongCorners(n,:)-midpoints(i,:));
+
+            end
+        end
+        midthresh = min(midsmat,[],'all');
+
+        for i = 1:length(pos(:,1))
+            for n = 1:length(strongCorners)
+                magsmat2(i,n) = norm(strongCorners(n,:)-pos(i,:));
+
+            end
+
+        end
+        magsmask = sum(magsmat2 > midthresh,2);
+        midmask2 = magsmask == 4;
+        mid2 = pos(midmask2,:);
+        mid2 = mid2(1:30:end,:);
+        midpoints = [midpoints; mid2];
+        % text(-600,-200,cornerCounts);
+
+
+        
+
+
+
+
+        
+
+        % polyind = inpolygon(xp(:,1),yp(:,2),pos(:,1),pos(:,2));
+
     end
+
+   
+
+
+
+    scatter(midpoints(:,1),midpoints(:,2),'r','filled');
+    scatter(center(:,1),center(:,2),'b','filled');
+
+
+    prompt = input('Do you want to change any edge points to center points?: (yes/no)','s');
+    disp('hit the mouse scroll wheel to end point selection');
+    if isequal(prompt,'yes')
+        button = 1;
+        hWaitbar = waitbar(0, 'Hit Cancel When Done', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
+        while true
+            if ~ishandle(hWaitbar)
+                    % Stop the if cancel button was pressed
+                    disp('Stopped by user');
+                    break;
+            elseif button ~= 2
+                waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
+                [xcen,ycen,button] = ginput(1);
+                if button == 2
+                    continue
+                end
+                clicked_point = [xcen,ycen];
+                closest_point = [NaN, NaN];
+                minDist = Inf;
+                for idx = 1:length(midpoints(:,1))
+                    if norm(clicked_point - midpoints(idx,:)) < minDist
+                        minDist = norm(clicked_point - midpoints(idx,:));
+                        closest_point = midpoints(idx,:);
+                    end
+                end
+        
+                center = [center;closest_point];
+                midpoints(sum(midpoints,2)==sum(closest_point),:) = [];
+                scatter(midpoints(:,1),midpoints(:,2),'r','filled');
+                scatter(center(:,1),center(:,2),'b','filled');
+
+            end
+            drawnow
+        end
+
+
+    end
+
+    prompt = input('Do you want to change any corner points to edge points?: (yes/no)','s');
+    if isequal(prompt,'yes')
+        button = 1;
+        hWaitbar = waitbar(0, 'Hit Cancel When Done', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
+        while true
+            if ~ishandle(hWaitbar)
+                    % Stop the if cancel button was pressed
+                    disp('Stopped by user');
+                    break;
+            elseif button ~= 2
+                waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
+                [xcen,ycen,button] = ginput(1);
+                if button == 2
+                    continue
+                end
+                clicked_point = [xcen,ycen];
+                closest_point = [NaN, NaN];
+                minDist = Inf;
+                for idx = 1:length(strongCorners(:,1))
+                    if norm(clicked_point - strongCorners(idx,:)) < minDist
+                        minDist = norm(clicked_point - strongCorners(idx,:));
+                        closest_point = strongCorners(idx,:);
+                    end
+                end
+        
+                midpoints = [midpoints;closest_point];
+                strongCorners(sum(strongCorners,2)==sum(closest_point),:) = [];
+                % scatter(strongCorners(:,1),strongCorners(:,2),'r','filled');
+                scatter(midpoints(:,1),midpoints(:,2),'r','filled');
+
+            end
+            drawnow
+        end
+
+
+    end
+
+    prompt = input('Do you want to add or remove any corner points?: (yes/no)','s');
+    if isequal(prompt,'yes')
+        button = 1;
+        hWaitbar = waitbar(0, 'Hit Cancel When Done', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
+        while true
+            if ~ishandle(hWaitbar)
+                    % Stop the if cancel button was pressed
+                    disp('Stopped by user');
+                    break;
+            elseif button ~= 2
+                waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
+
+                zoom on
+                zoom reset
+
+                [xcen,ycen,button] = ginput(1);
+                if button == 2
+                    continue
+                elseif button == 1
+                    clicked_point = [xcen,ycen];
+                    closest_point = [NaN, NaN];
+                    minDist = Inf;
+                    for idx = 1:length(pos(:,1))
+                        if norm(clicked_point - pos(idx,:)) < minDist
+                            minDist = norm(clicked_point - pos(idx,:));
+                            closest_point = pos(idx,:);
+                        end
+                    end
+            
+                    strongCorners = [strongCorners;round(closest_point)];
+                elseif button == 3
+                    clicked_point = [xcen,ycen];
+                    closest_point = [NaN, NaN];
+                    minDist = Inf;
+                    for idx = 1:length(strongCorners(:,1))
+                        if norm(clicked_point - strongCorners(idx,:)) < minDist
+                            minDist = norm(clicked_point - strongCorners(idx,:));
+                            closest_point = strongCorners(idx,:);
+                        end
+                    end
+            
+                    strongCorners(sum(strongCorners,2)==sum(closest_point),:) = [];
+                end
+            
+
+
+            
+                % strongCorners(sum(strongCorners,2)==sum(closest_point),:) = [];
+                % scatter(strongCorners(:,1),strongCorners(:,2),'r','filled');
+                hold off
+                imshow(mask)
+                hold on
+                scatter(center(:,1),center(:,2),[],'b','filled');
+                scatter(midpoints(:,1),midpoints(:,2),[],'r','filled');
+                scatter(strongCorners(:,1),strongCorners(:,2),[],'g+');
+                
+
+            end
+            drawnow
+        end
+
+
+    end
+
+    prompt = input('Do you want to add or remove any center points?: (yes/no)','s');
+    if isequal(prompt,'yes')
+        button = 1;
+        hWaitbar = waitbar(0, 'Hit Cancel When Done', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
+        while true
+            if ~ishandle(hWaitbar)
+                    % Stop the if cancel button was pressed
+                    disp('Stopped by user');
+                    break;
+            elseif button ~= 2
+                waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
+
+                zoom on
+                zoom reset
+                
+                [xcen,ycen,button] = ginput(1);
+                if button == 2
+                    continue
+                elseif button == 1
+                    clicked_point = [xcen,ycen];
+                    closest_point = clicked_point;
+                    center = [center;round(closest_point)];
+                elseif button == 3
+                    clicked_point = [xcen,ycen];
+                    closest_point = [NaN,NaN];
+                    minDist = Inf;
+                    for idx = 1:length(center(:,1))
+                        if norm(clicked_point - center(idx,:)) < minDist
+                            minDist = norm(clicked_point - center(idx,:));
+                            closest_point = center(idx,:);
+                        end
+                    end
+        
+                    center(sum(center,2)==sum(closest_point),:) = [];
+                    scatter(center(:,1),center(:,2),[],'b','filled');
+                end
+                % strongCorners(sum(strongCorners,2)==sum(closest_point),:) = [];
+                % scatter(strongCorners(:,1),strongCorners(:,2),'r','filled');
+                hold off
+                imshow(mask)
+                hold on
+                scatter(center(:,1),center(:,2),[],'b','filled');
+                scatter(midpoints(:,1),midpoints(:,2),[],'r','filled');
+                scatter(strongCorners(:,1),strongCorners(:,2),[],'g+');
+                
+
+            end
+            drawnow
+        end
+
+
+    end
+
+    prompt = input('Do you want to add or remove any edge points?: (yes/no)','s');
+    if isequal(prompt,'yes')
+        button = 1;
+        hWaitbar = waitbar(0, 'Hit Cancel When Done', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
+        while true
+            if ~ishandle(hWaitbar)
+                    % Stop the if cancel button was pressed
+                    disp('Stopped by user');
+                    break;
+            elseif button ~= 2
+                waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
+
+                zoom on
+                zoom reset
+
+                [xcen,ycen,button] = ginput(1);
+                if button == 2
+                    continue
+                elseif button == 1
+                    clicked_point = [xcen,ycen];
+                    closest_point = [NaN, NaN];
+                    minDist = Inf;
+                    for idx = 1:length(pos(:,1))
+                        if norm(clicked_point - pos(idx,:)) < minDist
+                            minDist = norm(clicked_point - pos(idx,:));
+                            closest_point = pos(idx,:);
+                        end
+                    end
+            
+                    midpoints = [midpoints;round(closest_point)];
+                elseif button == 3
+                    clicked_point = [xcen,ycen];
+                    closest_point = [NaN, NaN];
+                    minDist = Inf;
+                    for idx = 1:length(midpoints(:,1))
+                        if norm(clicked_point - midpoints(idx,:)) < minDist
+                            minDist = norm(clicked_point - midpoints(idx,:));
+                            closest_point = midpoints(idx,:);
+                        end
+                    end
+            
+                    midpoints(sum(midpoints,2)==sum(closest_point),:) = [];
+                end
+
+                % strongCorners(sum(strongCorners,2)==sum(closest_point),:) = [];
+                % scatter(strongCorners(:,1),strongCorners(:,2),'r','filled');
+                hold off
+                imshow(mask)
+                hold on
+                scatter(center(:,1),center(:,2),[],'b','filled');
+                scatter(midpoints(:,1),midpoints(:,2),[],'r','filled');
+                scatter(strongCorners(:,1),strongCorners(:,2),[],'g+');
+                
+
+            end
+            drawnow
+        end
+    end
+
+
+
+
+    
+
+    scatter(midpoints(:,1),midpoints(:,2),'r','filled');
+    scatter(center(:,1),center(:,2),'b','filled');
+
+    nexttile(1)
+    hold on
+    scatter(xp,yp)
     % figure
     % scatter(xp,yp)
     % plot(X,Y,'.r')
@@ -1210,61 +1601,77 @@ if isequal(boolcorner,'yes')
     %defined above and each midpoint
 
     midMags = zeros(Xr,Xc,length(midpoints(:,1)));
-    for q = 1:length(midpoints(:,1))
-        for n = 1:length(midMags(:,1,1))
-    
-            for m = 1:length(midMags(1,:,1))
-                if [X(n,m),Y(n,m)] - midpoints(q,:) == 0
-                    midMags(n,m,q) = 0;
-                else
-                    midMags(n,m,q) = norm([X(n,m),Y(n,m)] - midpoints(q,:));
+    if ~isempty(midpoints)
+        for q = 1:length(midpoints(:,1))
+            for n = 1:length(midMags(:,1,1))
+        
+                for m = 1:length(midMags(1,:,1))
+                    if [X(n,m),Y(n,m)] - midpoints(q,:) == 0
+                        midMags(n,m,q) = 0;
+                    else
+                        midMags(n,m,q) = norm([X(n,m),Y(n,m)] - midpoints(q,:));
+                    end
+        
                 end
-    
+        
+        
             end
     
-    
         end
+    else
+        midMags = ones(Xr,Xc).*100000;
 
     end
 
     cornerMags = zeros(Xr,Xc,length(strongCorners(:,1)));
-    for q = 1:length(strongCorners(:,1))
-        for n = 1:length(cornerMags(:,1,1))
-    
-            for m = 1:length(cornerMags(1,:,1))
-                if [X(n,m),Y(n,m)] - strongCorners(q,:) == 0
-                    cornerMags(n,m,q) = 0;
-                else
-                    cornerMags(n,m,q) = norm([X(n,m),Y(n,m)] - strongCorners(q,:));
+    if ~isempty(strongCorners)
+        for q = 1:length(strongCorners(:,1))
+            for n = 1:length(cornerMags(:,1,1))
+        
+                for m = 1:length(cornerMags(1,:,1))
+                    if [X(n,m),Y(n,m)] - strongCorners(q,:) == 0
+                        cornerMags(n,m,q) = 0;
+                    else
+                        cornerMags(n,m,q) = norm([X(n,m),Y(n,m)] - strongCorners(q,:));
+                    end
+        
                 end
-    
+        
+        
             end
     
-    
         end
+    else
+        cornerMags = ones(Xr,Xc).*100000;
 
     end
 
     centerMags = zeros(Xr,Xc,length(center(:,1)));
-    for q = 1:length(center(:,1))
-        for n = 1:length(centerMags(:,1,1))
-    
-            for m = 1:length(centerMags(1,:,1))
-                if [X(n,m),Y(n,m)] - center(q,:) == 0
-                    centerMags(n,m,q) = 0;
-                else
-                    centerMags(n,m,q) = norm([X(n,m),Y(n,m)] - center(q,:));
+    if ~isempty(center)
+        for q = 1:length(center(:,1))
+            for n = 1:length(centerMags(:,1,1))
+        
+                for m = 1:length(centerMags(1,:,1))
+                    if [X(n,m),Y(n,m)] - center(q,:) == 0
+                        centerMags(n,m,q) = 0;
+                    else
+                        centerMags(n,m,q) = norm([X(n,m),Y(n,m)] - center(q,:));
+                    end
+        
                 end
-    
+        
+        
             end
     
-    
         end
-
+    else
+        centerMags = ones(Xr,Xc).*100000;
     end
+
 
     cornerMags = min(cornerMags,[],3);
     midMags = min(midMags,[],3);
+    centerMags = min(centerMags,[],3);
     imidMags = 1./(midMags);
     icornerMags = 1./(cornerMags);
     icenterMags = 1./(centerMags);
@@ -1301,12 +1708,13 @@ if isequal(boolcorner,'yes')
     % nCenterMags = icenterMags./absmax.*255;
 
     c = uint8(cat(3,nMidMags,nCornerMags,nCenterMags));
-
-    rgb = zeros(length(nMidMags),3);
-
-    for i = 1:Xr*Xc
-        rgb(i,:) = [nMidMags(i),nCornerMags(i),nCenterMags(i)];
-    end
+    % 
+    % rgb = zeros(length(xp),3);
+    % 
+    % for i = 1:length(xp)
+    %     rgb(i,:) = [nMidMags(i),nCornerMags(i),nCenterMags(i)];
+    % end
+    rgb = [diag(nMidMags),diag(nCornerMags),diag(nCenterMags)];
 
     % heatFig = figure;
     % imshow(mask);
@@ -1318,15 +1726,47 @@ if isequal(boolcorner,'yes')
     % Yvecd = Yvec(1:100:end);
     % rgbd = rgb(1:100:end,:);
     % scatter(Xvecd,Yvecd,[],rgbd)
+    % scatter(xp,yp,[],rgb);
     % set(gcf,'Renderer','painters')
     Z = ones(size(X));
     % subplot(1,3,2);
-    nexttile
-    % heatm = surf(X,Y,Z,c,'EdgeColor','interp','FaceColor','interp');
-    imshow(c)
+    nexttile(3)
+    
+    pimage = uint8(zeros(length(basisImage(:,1)),length(basisImage(1,:)),3));
+    for i = 1:Xr
+        pimage(yp(i),xp(i),:) = c(i,n,:);
+        
+
+        
+
+    end
+    % xq = linspace(min(xp),max(xp),100);
+    % yq = linspace(min(yp),max(yp),100);
+    % [Xq,Yq] = meshgrid(xq,yq);
+    % c = double(c);
+    % Cr = interp2(X,Y,c(:,:,1),Xq,Yq);
+    % Cg = interp2(X,Y,c(:,:,2),Xq,Yq);
+    % Cb = interp2(X,Y,c(:,:,3),Xq,Yq);
+    % cq = cat(3,Cr,Cg,Cb);
+    % [ins,ous] = inpolygon(Xq,Yq,pos(:,1),pos(:,2));
+    % xy = X + Y;
+    % c = uint8(c);
+
+
+
+    heatm = surf(X,Y,Z,c,'EdgeColor','interp','FaceColor','interp');
+    % imshow(basisImage);
+    % hold on
+    % scatter(xp,yp,4,rgb,'filled');
+    % set(gcf,'Renderer','zbuffer');
+    hAx=gca; 
+    set(gca,'XTick',[], 'YTick', [])
+    set(gca,'XColor','none','YColor','none')
+    % % imshow(c)
+    % imshow(pimage);
     title('ROI Point Classification','FontSize',fontSize);
-    subtitle('Red = Edge, Green = Corner, Blue = Center','FontSize',fontSize);
-    % view(-90,90)
+    subtitle('Red = Edge, Green = Corner, Blue = Center');
+    view(0,90)
     % direction = [0 0 1];
     % rotate(heatm,direction,90)
 
@@ -1365,11 +1805,16 @@ if isequal(boolcorner,'yes')
     % heatFig2 = figure;
     % subplot(1,3,3);
     nexttile
-    imshow(c2)
+    heatm = surf(X,Y,Z,c2,'EdgeColor','interp','FaceColor','interp');
+    hAx=gca; 
+    set(gca,'XTick',[], 'YTick', [])
+    set(gca,'XColor','none','YColor','none')
+
+    % imshow(c2)
     title('Thresholded ROI Point Classification','FontSize',fontSize);
     subtitle('Red = Edge, Green = Corner, Blue = Center')
     % heatm2 = surf(X,Y,Z,c2,'EdgeColor','interp','FaceColor','interp');
-    % view(2)
+    view(2)
 
 
 
