@@ -1317,7 +1317,7 @@ if isequal(boolcorner,'d')
         magsmask = sum(magsmat2 > midthresh,2);
         midmask2 = magsmask == length(strongCorners(:,1));
         mid2 = pos(midmask2,:);
-        mid2 = mid2(1:10:end,:);
+        mid2 = mid2(1:end,:);
         midpoints = [midpoints; mid2];
         
     else
@@ -1362,7 +1362,12 @@ if isequal(boolcorner,'d')
         magsmask = sum(magsmat2 > midthresh,2);
         midmask2 = magsmask == length(strongCorners(:,1));
         mid2 = pos(midmask2,:);
-        mid2 = mid2(1:10:end,:);
+
+        if length(pos(:,1)) >360
+            mid2 = mid2(1:2:end,:);
+        else
+            mid2 = mid2(1:end,:);
+        end
         % polyind2 = inpolygon(midpoints(:,1),midpoints(:,2),pos(:,1),pos(:,2));
         % midpoints(polyind2,:) = [];
         % polyind3 = inpolygon(mid2(:,1),mid2(:,2),pos(:,1),pos(:,2));
@@ -2217,132 +2222,141 @@ end
 
 linevalues_cumulative_c = linevalues_cumulative;
 
-r_values = linspace(0,1,max(num_points))*radius_mm;
-prompt = 'How many radial sections? ';
-section_num = input(prompt);
-step = floor(num_points./section_num); 
-
-%% Binning of Data
-binned_vals = zeros(section_num,num_images);
-std_binned_vals = binned_vals;
-line_std_vals = binned_vals; 
-r_section = zeros(section_num+1,1,num_images);
-
-for i = 1:num_images
-    temp = 0;
-    ind = 1;
-
-
-    if ~draw
-        while temp < num_points && ind <= section_num
-            if temp == 0
-                temp = 1;
-            end
-            
-    
-            if temp+step > num_points
-                leap = num_points;
-            else
-                leap = temp + step;
-            end
-    
-            line_std_vals(ind,i) = mean(std(linevalues_cumulative(temp:leap,:,i),0,1));
-            linevalues_cumulative_c(temp:leap,:,i) = 30*ind;
-            binned_vals(ind,i) = mean(linevalues_cumulative(temp:leap,:,i),'all');
-            std_binned_vals(ind,i) = std(linevalues_cumulative(temp:leap,:,i),[],'all');
-            r_section(ind,1,i) = r_values(temp);
-            %r_section(ind,2,i) = r_values(temp+step);
-    
-            if ind == 1
-                temp = 0;
-            end
-    
-            ind = ind + 1;
-            temp = temp +step; 
-    
-        end
-        r_section(ind,1,i) = radius_mm;
-    else
-         temp = ones(length(mags),1);
-         while any(temp < num_points) && ind <= section_num
-            if temp == 0
-                temp = 1;
-            end
-            
-    
-            if any(temp+step>num_points)
-                leap = num_points+1;
-                temp = temp + 1;
-            else
-                leap = temp + step;
-            end
-
-            section = linevalues_cumulative(1:max(leap)-1,:,i);
-            %section = linevalues_cumulative(min(num_points):900,:,i);
-            secmask = section>=0;
-            %section = linevalues_cumulative(temp:leap,:,i);
-            totalp = sum(step);
-            tstor = zeros(1,totalp);
-            stdstor = zeros(1,length(step));
-            tsum = 1;
-
-            if any(step > length(section(:,1)))
-                smask = step > length(section(:,1));
-                step(smask) = length(section(:,1));
-            end
-
-            for qw = 1:length(step)
-                tstor(tsum:tsum+length(section(temp(qw):leap(qw)-1,qw))-1) = section(temp(qw):leap(qw)-1,qw);
-                linevalues_cumulative_c(temp(qw):leap(qw)-1,qw,i) = 30*ind;
-                stdstor(qw) = std(section(temp(qw):leap(qw)-1,qw));
-                if any(stdstor > 1)
-                    pause = 1;
-
-
-                end
-                tsum = tsum+step(qw);
-                
-
-            end
-
-
-            line_std_vals(ind,i) = mean(stdstor);
-            binned_vals(ind,i) = mean(tstor,'all');
-            std_binned_vals(ind,i) = std(tstor,[],'all');
-            %r_section(ind,1,i) = r_values(temp);
-            %r_section(ind,2,i) = r_values(temp+step);
-    
-            % if ind == 1
-            %     temp = 0;
-            % end
-    
-            ind = ind + 1;
-            temp = temp +step; 
-    
-        end
-        %r_section(ind,1,i) = radius_mm;
-
-
-
+prompt = input('Did you do lineplot analysis?: (y/n): ','s');
+if isequal(prompt,'y')
+    r_values = linspace(0,1,max(num_points))*radius_mm;
+    prompt = 'How many radial sections? ';
+    section_num = input(prompt);
+    if isempty(section_num)
+        section_num = 3;
     end
-end
+    step = floor(num_points./section_num); 
+    
+    %% Binning of Data
+    binned_vals = zeros(section_num,num_images);
+    std_binned_vals = binned_vals;
+    line_std_vals = binned_vals; 
+    r_section = zeros(section_num+1,1,num_images);
+    
+    for i = 1:num_images
+        temp = 0;
+        ind = 1;
+    
+    
+        if ~draw
+            while temp < num_points && ind <= section_num
+                if temp == 0
+                    temp = 1;
+                end
+                
+        
+                if temp+step > num_points
+                    leap = num_points;
+                else
+                    leap = temp + step;
+                end
+        
+                line_std_vals(ind,i) = mean(std(linevalues_cumulative(temp:leap,:,i),0,1));
+                linevalues_cumulative_c(temp:leap,:,i) = 30*ind;
+                binned_vals(ind,i) = mean(linevalues_cumulative(temp:leap,:,i),'all');
+                std_binned_vals(ind,i) = std(linevalues_cumulative(temp:leap,:,i),[],'all');
+                r_section(ind,1,i) = r_values(temp);
+                %r_section(ind,2,i) = r_values(temp+step);
+        
+                if ind == 1
+                    temp = 0;
+                end
+        
+                ind = ind + 1;
+                temp = temp +step; 
+        
+            end
+            r_section(ind,1,i) = radius_mm;
+        else
+             temp = ones(length(mags),1);
+             while any(temp < num_points) && ind <= section_num
+                if temp == 0
+                    temp = 1;
+                end
+                
+        
+                if any(temp+step>num_points)
+                    leap = num_points+1;
+                    temp = temp + 1;
+                else
+                    leap = temp + step;
+                end
+    
+                section = linevalues_cumulative(1:max(leap)-1,:,i);
+                %section = linevalues_cumulative(min(num_points):900,:,i);
+                secmask = section>=0;
+                %section = linevalues_cumulative(temp:leap,:,i);
+                totalp = sum(step);
+                tstor = zeros(1,totalp);
+                stdstor = zeros(1,length(step));
+                tsum = 1;
+    
+                if any(step > length(section(:,1)))
+                    smask = step > length(section(:,1));
+                    step(smask) = length(section(:,1));
+                end
+    
+                for qw = 1:length(step)
+                    tstor(tsum:tsum+length(section(temp(qw):leap(qw)-1,qw))-1) = section(temp(qw):leap(qw)-1,qw);
+                    linevalues_cumulative_c(temp(qw):leap(qw)-1,qw,i) = 30*ind;
+                    stdstor(qw) = std(section(temp(qw):leap(qw)-1,qw));
+                    if any(stdstor > 1)
+                        pause = 1;
+    
+    
+                    end
+                    tsum = tsum+step(qw);
+                    
+    
+                end
+    
+    
+                line_std_vals(ind,i) = mean(stdstor);
+                binned_vals(ind,i) = mean(tstor,'all');
+                std_binned_vals(ind,i) = std(tstor,[],'all');
+                %r_section(ind,1,i) = r_values(temp);
+                %r_section(ind,2,i) = r_values(temp+step);
+        
+                % if ind == 1
+                %     temp = 0;
+                % end
+        
+                ind = ind + 1;
+                temp = temp +step; 
+        
+            end
+            %r_section(ind,1,i) = radius_mm;
+    
+    
+    
+        end
+    end
+    
+    if section_num*step < num_points
+        diff = num_points - section_num*step;
+        disp('Number of points excluded near the edge: ');
+        disp(diff);
+        disp('All sections have the same number of points. Points excluded because section_num/num_points is not integer.');
+    end
+    
+    norm_binned_vals = binned_vals; 
+    norm_std_vals = binned_vals; 
+    [row,col] = size(binned_vals);
+    for qq = 1:row
+        normfac = mean(binned_vals(qq,:));
+        initialval = binned_vals(qq,1);
+    
+        norm_binned_vals(qq,:) = binned_vals(qq,:)/initialval;
+        norm_std_vals(qq,:) = std_binned_vals(qq,:)/initialval;
+    
+    end
 
-if section_num*step < num_points
-    diff = num_points - section_num*step;
-    disp('Number of points excluded near the edge: ');
-    disp(diff);
-    disp('All sections have the same number of points. Points excluded because section_num/num_points is not integer.');
-end
-
-norm_binned_vals = binned_vals; 
-norm_std_vals = binned_vals; 
-[row,col] = size(binned_vals);
-for qq = 1:row
-    normfac = mean(binned_vals(qq,:));
-    initialval = binned_vals(qq,1);
-
-    norm_binned_vals(qq,:) = binned_vals(qq,:)/initialval;
-    norm_std_vals(qq,:) = std_binned_vals(qq,:)/initialval;
+else
 
 end
 
@@ -2356,138 +2370,239 @@ bMidMags = nMidMags/255;
 
 warning('off','all')
 
+%sets thresholds for point classification and indexing image pixels
 cutoffs = 0.05:0.05:0.95;
 
-indmat = zeros(Xr,Xc,length(cutoffs));
-
-for i = 1:length(cutoffs)
-    cutthresh = cutoffs(i);
-    for n = 1:Xr
+prompt = input("Do you want to analyze the video by point classification?: (y/n): ",'s');
+if isequal(prompt,'y')
+    indmat = zeros(Xr,Xc,length(cutoffs));
     
-        for m = 1:Xc
+    for i = 1:length(cutoffs)
+        cutthresh = cutoffs(i);
+        for n = 1:Xr
+        
+            for m = 1:Xc
+        
+                corn = bCornerMags(n,m);
+                cen = bCenterMags(n,m);
+                mid = bMidMags(n,m);
+                
+                if (corn - cen) > cutthresh  && corn - mid > cutthresh
+                    indmat(n,m,i) = 2;
+                elseif (cen - corn) > cutthresh  && cen - mid > cutthresh
+                    indmat(n,m,i) = 3;
+                elseif (mid - corn) > cutthresh  && mid - cen > cutthresh
+                    indmat(n,m,i) = 1;
+                end
+        
+        
+            end
+        end
+    end
     
-            corn = bCornerMags(n,m);
-            cen = bCenterMags(n,m);
-            mid = bMidMags(n,m);
+    cenmask = zeros(Xr,Xc,length(cutoffs));
+    cornmask = zeros(Xr,Xc,length(cutoffs));
+    midmask = zeros(Xr,Xc,length(cutoffs));
+    for i = 1:length(cutoffs)
+        cenmask(:,:,i) = indmat(:,:,i) == 3;
+        cornmask(:,:,i) = indmat(:,:,i) == 2;
+        midmask(:,:,i) = indmat(:,:,i) == 1;
+    end
+    [yspan,xspan] = size(basisImage);
+    [XS,YS] = meshgrid(1:1:xspan,1:1:yspan);
+    XS = reshape(XS,1,[]);
+    YS = reshape(YS,1,[]);
+    % 1 --> Edge 
+    % 2 --> Corner 
+    % 3 --> Center
+    integrated_pixels = zeros(num_images,length(cutoffs),3);
+    pixel_counts = zeros(1,length(cutoffs),3);
+    % disp('A circle would have 1 edge cluster, a serpentine section would have 2')
+    % prompt = input('How many edges are you expecting: ','s');
+    kfig = figure;
+    tlcc = tiledlayout('flow');
+    tlcc.Padding = 'compact';
+    tlcc.TileSpacing = 'compact';
+    set(gcf, 'units','normalized','outerposition',[0 0 1 1]);
+    % imshow(basisImage);
+    % hold on;
+    shrink = 0;
+    for i = 1:length(cutoffs)
+        nexttile
+        imshow(basisImage);
+        hold on;
+        temp = double([X(logical(cornmask(:,:,i))),Y(logical(cornmask(:,:,i)))]);
+        opts = statset('Display','off');
+        [cornind,Co] = kmeans(temp,length(strongCorners(:,1)),'Replicates',5,'Options',opts);
+       
+        photomaskcorn = zeros(xspan,yspan);
+        for q = 1:length(strongCorners(:,1))
+            plot(temp(cornind==q,1),temp(cornind==q,2),'g.','MarkerSize',12);
             
-            if (corn - cen) > cutthresh  && corn - mid > cutthresh
-                indmat(n,m,i) = 2;
-            elseif (cen - corn) > cutthresh  && cen - mid > cutthresh
-                indmat(n,m,i) = 3;
-            elseif (mid - corn) > cutthresh  && mid - cen > cutthresh
-                indmat(n,m,i) = 1;
+            temp2 = temp(cornind==q,:);
+            temp2 = unique(temp2,'rows','stable');
+            boundind = boundary(temp2(:,1),temp2(:,2),shrink);
+            if length(temp2(:,1)) == 1
+                maskinds = inpolygon(XS,YS,temp2(:,1),temp2(:,2));
+                photomask(maskinds) = 1;
+
+            elseif isempty(boundind)
+                boundpoints = interppolygon(temp2,60,'linear');
+                plot(boundpoints(:,1),boundpoints(:,2));
+                [maskinds] = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
+                photomaskcorn(maskinds) = 1;
+            else
+                boundpoints = interppolygon(temp2(boundind,:),60,'linear');
+                plot(boundpoints(:,1),boundpoints(:,2));
+                maskinds = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
+                photomaskcorn(maskinds) = 1;
             end
     
-    
         end
-    end
-end
+        % plot(Co(:,1),Co(:,2),'gx','MarkerSize',15);
+    
+        temp = double([X(logical(cenmask(:,:,i))),Y(logical(cenmask(:,:,i)))]);
+        [centerind,Ce] = kmeans(temp,1,'Replicates',5,'Options',opts);
+        plot(temp(centerind==1,1),temp(centerind==1,2),'b.','MarkerSize',12);
+        % plot(Ce(:,1),Ce(:,2),'bx','MarkerSize',15);
+        photomaskcen = zeros(xspan,yspan);
+        temp2 = temp(centerind==1,:);
+        temp2 = unique(temp2,'rows','stable');
+        boundind = boundary(temp2(:,1),temp2(:,2),0.5);
+        if length(temp2(:,1)) == 1
+            maskinds = inpolygon(XS,YS,temp2(:,1),temp2(:,2));
+            photomask(maskinds) = 1;
 
-cenmask = zeros(Xr,Xc,length(cutoffs));
-cornmask = zeros(Xr,Xc,length(cutoffs));
-midmask = zeros(Xr,Xc,length(cutoffs));
-for i = 1:length(cutoffs)
-    cenmask(:,:,i) = indmat(:,:,i) == 3;
-    cornmask(:,:,i) = indmat(:,:,i) == 2;
-    midmask(:,:,i) = indmat(:,:,i) == 1;
-end
-[yspan,xspan] = size(basisImage);
-[XS,YS] = meshgrid(1:1:xspan,1:1:yspan);
-XS = reshape(XS,1,[]);
-YS = reshape(YS,1,[]);
-% 1 --> Edge 
-% 2 --> Corner 
-% 3 --> Center
-integrated_pixels = zeros(num_images,length(cutoffs),3);
-pixel_counts = zeros(1,length(cutoffs),3);
-disp('A circle would have 1 edge cluster, a serpentine section would have 2')
-prompt = input('How many edges are you expecting: ','s');
-kfig = figure;
-for i = 1:length(cutoffs)
-    temp = double([X(logical(cornmask(:,:,i))),Y(logical(cornmask(:,:,i)))]);
-    opts = statset('Display','off');
-    [cornind,Co] = kmeans(temp,cornerCount,'Replicates',5,'Options',opts);
-    photomaskcorn = zeros(xspan,yspan);
-    for q = 1:cornerCount
-        temp2 = temp(cornind==q,:);
-        boundind = boundary(temp2(:,1),temp2(:,2));
-        if isempty(boundind)
+        elseif isempty(boundind)
             boundpoints = interppolygon(temp2,60,'linear');
+            plot(boundpoints(:,1),boundpoints(:,2));
             [maskinds] = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
-            photomaskcorn(maskinds) = 1;
+            photomaskcen(maskinds) = 1;
         else
             boundpoints = interppolygon(temp2(boundind,:),60,'linear');
+            plot(boundpoints(:,1),boundpoints(:,2));
             maskinds = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
-            photomaskcorn(maskinds) = 1;
+            photomaskcen(maskinds) = 1;
         end
-
-    end
-
-    temp = double([X(logical(cenmask(:,:,i))),Y(logical(cenmask(:,:,i)))]);
-    [centerind,Ce] = kmeans(temp,1,'Replicates',5,'Options',opts);
-    photomaskcen = zeros(xspan,yspan);
-    temp2 = temp(centerind==1,:);
-    boundind = boundary(temp2(:,1),temp2(:,2));
-    if isempty(boundind)
-        boundpoints = interppolygon(temp2,60,'linear');
-        [maskinds] = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
-        photomaskcen(maskinds) = 1;
-    else
-        boundpoints = interppolygon(temp2(boundind,:),60,'linear');
-        maskinds = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
-        photomaskcen(maskinds) = 1;
-    end
-
-    temp = double([X(logical(midmask(:,:,i))),Y(logical(midmask(:,:,i)))]);
-    opts = statset('Display','off');
     
-    [midind,Mi] = kmeans(temp,str2num(prompt),'Replicates',5,'Options',opts);
-    % kfig = figure;
-    imshow(basisImage);
-    hold on;
-    for qq = 1:str2num(prompt)
-        plot(temp(midind==qq,1),temp(midind==qq,2),'.','MarkerSize',12);
-    end
-    plot(Mi(:,1),Mi(:,2),'bx','MarkerSize',15);
-    text(-10,-10,num2str(sum(photomaskedge,'all')));
-    % hold off;
+        temp = double([X(logical(midmask(:,:,i))),Y(logical(midmask(:,:,i)))]);
+        opts = statset('Display','off');
 
-    photomaskedge = zeros(xspan,yspan);
-    for q = 1:str2num(prompt)
-        temp2 = temp(midind==q,:);
-        boundind = boundary(temp2(:,1),temp2(:,2));
-        if isempty(boundind)
-            boundpoints = interppolygon(temp2,60,'linear');
-            plot()
-            [maskinds] = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
-            photomaskedge(maskinds) = 1;
+        % clusterNum = str2num(prompt)*4;
+        if cutoffs(i) >= 0.5
+            clusterNum = length(strongCorners(:,1));
         else
-            boundpoints = interppolygon(temp2(boundind,:),60,'linear');
-            maskinds = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
-            photomaskedge(maskinds) = 1;
+            clusterNum = length(strongCorners(:,1))*4;
         end
+        
+        [midind,Mi] = kmeans(temp,clusterNum,'Replicates',5,'Options',opts,'Distance','cityblock');
+        % kfig = figure;
+        % imshow(basisImage);
+        % hold on;
+        for qq = 1:clusterNum
+            plot(temp(midind==qq,1),temp(midind==qq,2),'r.','MarkerSize',12);
+        end
+        % plot(Mi(:,1),Mi(:,2),'rx','MarkerSize',15);
+        % text(-10,-10,num2str(sum(photomaskedge,'all')));
+        % hold off;
+    
+        photomaskedge = zeros(xspan,yspan);
+        for q = 1:clusterNum
+            temp2 = temp(midind==q,:);
+            temp2 = unique(temp2,'rows','stable');
+            boundind = boundary(temp2(:,1),temp2(:,2),shrink);
+            if length(temp2(:,1)) == 1
+                maskinds = inpolygon(XS,YS,temp2(:,1),temp2(:,2));
+                photomask(maskinds) = 1;
 
+            elseif isempty(boundind)
+                boundpoints = interppolygon(temp2,60,'linear');
+                plot(boundpoints(:,1),boundpoints(:,2));
+                [maskinds] = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
+                photomaskedge(maskinds) = 1;
+            else
+                boundpoints = interppolygon(temp2(boundind,:),60,'linear');
+                plot(boundpoints(:,1),boundpoints(:,2));
+                maskinds = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
+                photomaskedge(maskinds) = 1;
+            end
+    
+        end
+        % text(-10,-10,num2str(sum(photomaskedge,'all')));
+        title(['Threshold = '  num2str(cutoffs(i))]);
+        hold off
+        pixel_counts(1,i,1) = sum(photomaskedge,'all');
+        pixel_counts(1,i,2) = sum(photomaskcorn,'all');
+        pixel_counts(1,i,3) = sum(photomaskcen,'all');
+    
+    
+    
+        for ii = 1:num_images
+            currentImage = [imagefiles(ii).folder '\' imagefiles(ii).name];
+            %tiff_stack1 = imread(currentImage, "tiff");
+            %tiff_stack = imadjust(imread(currentImage, "tiff"));
+            tiff_stack = im2gray(imread(currentImage));
+            % tiff_stack = uint8(single(tiff_stack).*alphamat);
+            integrated_pixels(ii,i,2) = mean(tiff_stack(logical(photomaskcorn)));
+            integrated_pixels(ii,i,3) = mean(tiff_stack(logical(photomaskcen)));
+            integrated_pixels(ii,i,1) = mean(tiff_stack(logical(photomaskedge)));
+        end
+    
     end
-    pixel_counts(1,i,1) = sum(photomaskedge,'all');
-    pixel_counts(1,i,2) = sum(photomaskcorn,'all');
-    pixel_counts(1,i,3) = sum(photomaskcen,'all');
-
-
-
-    for ii = 1:num_images
-        currentImage = [imagefiles(ii).folder '\' imagefiles(ii).name];
-        %tiff_stack1 = imread(currentImage, "tiff");
-        %tiff_stack = imadjust(imread(currentImage, "tiff"));
-        tiff_stack = im2gray(imread(currentImage));
-        % tiff_stack = uint8(single(tiff_stack).*alphamat);
-        integrated_pixels(ii,i,2) = mean(tiff_stack(logical(photomaskcorn)));
-        integrated_pixels(ii,i,3) = mean(tiff_stack(logical(photomaskcen)));
-        integrated_pixels(ii,i,1) = mean(tiff_stack(logical(photomaskedge)));
+    
+    warning('on','all')
+elseif exist('integrated_pixels','var')
+    if ~isempty(integrated_pixels)
+        Cornfig = figure;
+        Cornfig.Color = 'w';
+        tl3 = tiledlayout(1,3);
+        tl3.Padding = 'compact';
+        tl3.TileSpacing = 'compact';
+        set(gcf, 'units','normalized','outerposition',[0 0 1 1]);
+        nexttile
+        title('Corner Points')
+        ylabel('Fluorescent Intensity')
+        xlabel('Time')
+        hold on
+        for i=1:length(cutoffs)
+            plot(linspace(0,1,num_images),integrated_pixels(:,i,2),'LineWidth',sqrt(i));
+            % legend(num2str(cutoffs(i)));
+        end
+        legendCell = cellstr(num2str(cutoffs', 'Threshold=%.2f'));
+        legend(legendCell);
+        
+        % Edgefig = figure;
+        nexttile
+        title('Edge Points')
+        ylabel('Fluorescent Intensity')
+        xlabel('Time')
+        hold on
+        for i=1:length(cutoffs)
+            plot(linspace(0,1,num_images),integrated_pixels(:,i,1),'LineWidth',sqrt(i));
+            % legend(num2str(cutoffs(i)));
+        end
+        legend(legendCell);
+        
+        % Cenfig = figure;
+        nexttile
+        title('Center Points')
+        ylabel('Fluorescent Intensity')
+        xlabel('Time')
+        hold on
+        for i=1:length(cutoffs)
+            plot(linspace(0,1,num_images),integrated_pixels(:,i,3),'LineWidth',sqrt(i));
+            % legend(num2str(cutoffs(i)));
+        end
+        legend(legendCell);
     end
-
+else
+    section_num = 3;
+    norm_binned_vals = binned_vals;
 end
 
-warning('on','all')
+
+
+    
 disp("Data Generation Time");
 toc
 %% Plotting & Data Writing
@@ -2534,6 +2649,43 @@ if isequal(filename_output,'none')
 else
     %filename_output = input(prompt,'s');
     names = string(Legend);
+    if exist('legendCell','var')
+
+    else
+        legendCell = {};
+    end
+
+    if exist('binned_vals','var')
+
+    else
+        binned_vals = zeros(1,length(Legend));
+    end
+
+    if exist('norm_binned_vals','var')
+
+    else
+        norm_binned_vals = zeros(1,length(Legend));
+    end
+
+    if exist('std_binned_vals','var')
+
+    else
+        std_binned_vals = zeros(1,length(Legend));
+    end
+
+    if exist('norm_std_vals','var')
+
+    else
+        norm_std_vals = zeros(1,length(Legend));
+    end
+
+    if exist('line_std_vals','var')
+
+    else
+        line_std_vals = zeros(1,length(Legend));
+    end
+    
+    names2 = string(legendCell);
     stdnames = names+"std";
     normnames = names+"norm";
     nstdnames = names+"stdnorm";
@@ -2542,6 +2694,8 @@ else
     
     wordformat = string('');
     numformat = string('');
+    wordformat2 = string('');
+    numformat2 = string('');
 
     for i = 1:length(names)
         wordformat = wordformat + '%s ';
@@ -2553,18 +2707,47 @@ else
     end
     numformat = numformat + '\r\n';
 
+    for i = 1:length(names2)
+        wordformat2 = wordformat2 + '%s ';
+    end
+    wordformat2 = wordformat2 + '\r\n';
+
+    for i = 1:length(names2)
+        numformat2 = numformat2 + '%.2f ';
+    end
+    numformat2 = numformat2 + '\r\n';
+
 
     fileID = fopen(filename_output,'w');
+    fprintf(fileID,'Lineplot Mean Intensity Values Binned\n');
     fprintf(fileID,wordformat,names);
     fprintf(fileID,numformat,binned_vals);
+    fprintf(fileID,'STD of Lineplot Mean Intensity Values Binned\n');
     fprintf(fileID,wordformat,stdnames);
     fprintf(fileID,numformat,std_binned_vals);
+    fprintf(fileID,'Normalized Lineplot Mean Intensity Values Binned\n');
     fprintf(fileID,wordformat,normnames);
     fprintf(fileID,numformat,norm_binned_vals);
+    fprintf(fileID,'STD of Normalized Lineplot Mean Intensity Values Binned\n');
     fprintf(fileID,wordformat,nstdnames);
     fprintf(fileID,numformat,norm_std_vals);
+    fprintf(fileID,'Lineplot STD Intensity Values Binned\n');
     fprintf(fileID,wordformat,lineplotstd);
     fprintf(fileID,numformat,line_std_vals);
+    fprintf(fileID,'ROI Point Classification Integrated Intensity\n');
+    fprintf(fileID,wordformat2,names2+'Edge');
+    fprintf(fileID,numformat2,integrated_pixels(:,:,1));
+    fprintf(fileID,wordformat2,names2+'Corner');
+    fprintf(fileID,numformat2,integrated_pixels(:,:,2));
+    fprintf(fileID,wordformat2,names2+'Center');
+    fprintf(fileID,numformat2,integrated_pixels(:,:,3));
+    fprintf(fileID,'Number of Pixels at Each Threshold\n');
+    fprintf(fileID,wordformat2,names2+'Edge');
+    fprintf(fileID,numformat2,pixel_counts(:,:,1));
+    fprintf(fileID,wordformat2,names2+'Corner');
+    fprintf(fileID,numformat2,pixel_counts(:,:,2));
+    fprintf(fileID,wordformat2,names2+'Center');
+    fprintf(fileID,numformat2,pixel_counts(:,:,3));
     fclose(fileID);
 end
 
