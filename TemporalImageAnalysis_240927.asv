@@ -8,9 +8,9 @@ tic
 %defines image directory
 %set file path to '' if you only want to select images in the folder this
 %code file is in
-filepath = 'C:\Users\mmani\University of Michigan Dropbox\Matthew Manion\Temporal-Image-Analysis';
+filepath = 'C:\Users\mmani\Documents\D6_sub50_output';
 % filepath = '';
-imagepath = [filepath  '\D5*.png'];
+imagepath = [filepath  '\*.png'];
 % imagepath = [filepath  '\ConcentricSquare.jpg'];
 imagefiles = dir(imagepath);
 num_images = length(imagefiles);
@@ -1235,6 +1235,76 @@ if isequal(boolcorner,'d')
         end
         
     end
+    hold off
+
+    prompt = input('Do you want to add or remove any corner points?: (yes/no)','s');
+    if isequal(prompt,'yes')
+        button = 1;
+        hWaitbar = waitbar(0, 'Hit Cancel When Done', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
+        while true
+            if ~ishandle(hWaitbar)
+                    % Stop the if cancel button was pressed
+                    disp('Stopped by user');
+                    break;
+            elseif button ~= 2
+                waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
+
+                zoom on
+                zoom reset
+
+                [xcen,ycen,button] = ginput(1);
+                if button == 2
+                    continue
+                elseif button == 1
+                    clicked_point = [xcen,ycen];
+                    closest_point = [NaN, NaN];
+                    minDist = Inf;
+                    for idx = 1:length(pos(:,1))
+                        if norm(clicked_point - pos(idx,:)) < minDist
+                            minDist = norm(clicked_point - pos(idx,:));
+                            closest_point = pos(idx,:);
+                        end
+                    end
+            
+                    strongCorners = [strongCorners;round(closest_point)];
+                elseif button == 3
+                    clicked_point = [xcen,ycen];
+                    closest_point = [NaN, NaN];
+                    minDist = Inf;
+                    for idx = 1:length(strongCorners(:,1))
+                        if norm(clicked_point - strongCorners(idx,:)) < minDist
+                            minDist = norm(clicked_point - strongCorners(idx,:));
+                            closest_point = strongCorners(idx,:);
+                        end
+                    end
+            
+                    strongCorners(sum(strongCorners,2)==sum(closest_point),:) = [];
+                end
+            
+
+
+            
+                % strongCorners(sum(strongCorners,2)==sum(closest_point),:) = [];
+                % scatter(strongCorners(:,1),strongCorners(:,2),'r','filled');
+                hold off
+                imshow(mask)
+                hold on
+                % scatter(center(:,1),center(:,2),[],'b','filled');
+                % scatter(midpoints(:,1),midpoints(:,2),[],'r','filled');
+                scatter(strongCorners(:,1),strongCorners(:,2),[],'g+');
+                
+
+            end
+            drawnow
+        end
+
+
+    end
+    imshow(binaryBasisImage);
+    hold on
+    plot(strongCorners(:,1),strongCorners(:,2),'g+');
+
+
     cornerCounts = strcat('Corner Num = ', num2str(cornerCount));
     % text(-50,-50,cornerCounts);
     [corow,cocol] = size(strongCorners);
@@ -1272,6 +1342,65 @@ if isequal(boolcorner,'d')
     midpoints = [midpoints(midinds,:);midpoints(midon,:)];
 
     % center = [round(mean(midpoints(:,1))),round(mean(midpoints(:,2)))];
+
+    prompt = input('Do you want to add or remove any edge points?: (yes/no)','s');
+    if isequal(prompt,'yes')
+        button = 1;
+        hWaitbar = waitbar(0, 'Hit Cancel When Done', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
+        while true
+            if ~ishandle(hWaitbar)
+                    % Stop the if cancel button was pressed
+                    disp('Stopped by user');
+                    break;
+            elseif button ~= 2
+                waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
+
+                zoom on
+                zoom reset
+
+                [xcen,ycen,button] = ginput(1);
+                if button == 2
+                    continue
+                elseif button == 1
+                    clicked_point = [xcen,ycen];
+                    closest_point = [NaN, NaN];
+                    minDist = Inf;
+                    for idx = 1:length(pos(:,1))
+                        if norm(clicked_point - pos(idx,:)) < minDist
+                            minDist = norm(clicked_point - pos(idx,:));
+                            closest_point = pos(idx,:);
+                        end
+                    end
+            
+                    midpoints = [midpoints;round(closest_point)];
+                elseif button == 3
+                    clicked_point = [xcen,ycen];
+                    closest_point = [NaN, NaN];
+                    minDist = Inf;
+                    for idx = 1:length(midpoints(:,1))
+                        if norm(clicked_point - midpoints(idx,:)) < minDist
+                            minDist = norm(clicked_point - midpoints(idx,:));
+                            closest_point = midpoints(idx,:);
+                        end
+                    end
+            
+                    midpoints(sum(midpoints,2)==sum(closest_point),:) = [];
+                end
+
+                % strongCorners(sum(strongCorners,2)==sum(closest_point),:) = [];
+                % scatter(strongCorners(:,1),strongCorners(:,2),'r','filled');
+                hold off
+                imshow(mask)
+                hold on
+                scatter(center(:,1),center(:,2),[],'b','filled');
+                scatter(midpoints(:,1),midpoints(:,2),[],'r','filled');
+                scatter(strongCorners(:,1),strongCorners(:,2),[],'g+');
+                
+
+            end
+            drawnow
+        end
+    end
     
 
     
@@ -1322,7 +1451,7 @@ if isequal(boolcorner,'d')
         
     else
         % polytest = polygrid(pos(:,1),pos(:,2),0.000224871879); %gives 100 total points
-        polytest = polygrid(pos(:,1),pos(:,2),0.004);
+        polytest = polygrid(pos(:,1),pos(:,2),0.001);
         xp = round(polytest(:,1));
         yp = round(polytest(:,2));
         polyind = inpolygon(xp,yp,pos(:,1),pos(:,2));
@@ -1353,7 +1482,7 @@ if isequal(boolcorner,'d')
         midthresh = min(midsmat,[],'all');
 
         for i = 1:length(pos(:,1))
-            for n = 1:length(strongCorners)
+            for n = 1:length(strongCorners(:,1))
                 magsmat2(i,n) = norm(strongCorners(n,:)-pos(i,:));
 
             end
@@ -1587,7 +1716,7 @@ if isequal(boolcorner,'d')
 
     end
 
-    prompt = input('Do you want to add or remove any edge points?: (yes/no)','s');
+    prompt = input('Do you want to add or remove any individual edge points?: (yes/no)','s');
     if isequal(prompt,'yes')
         button = 1;
         hWaitbar = waitbar(0, 'Hit Cancel When Done', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
@@ -1645,8 +1774,72 @@ if isequal(boolcorner,'d')
             drawnow
         end
     end
+    prompt = input('Do you want to remove many edge points?: (y/n): ','s');
+    looper = false;
+    if isequal(prompt,'y')
+        looper = true;
+    end
+    while looper
+    
+        erashape = drawrectangle();
+        txt = text(1,20,'0');
+        hWaitbar = waitbar(0, 'Hit Cancel When Your Rectangle Is Good', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
+        while true
+            
+    
+            
+            if ~ishandle(hWaitbar)
+                % Stop the if cancel button was pressed
+                disp('Stopped by user');
+                break;
+            else
+                % Update the wait bar
+                waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
+                area = erashape.Position(3)*erashape.Position(4);
+    
+                set(txt,'String',['Pixel Area: ' num2str(area)]);
+                
+            end
+            
+            
+            drawnow
+        
+    
+       
+    
+    
+        end
+    
+        % mask = createMask(shape);
+        erasepos = erashape.Position;
+        x_corne = erasepos(1);
+        y_corne = erasepos(2);
+        wide = erasepos(3);
+        heie = erasepos(4);
+        boundbox = [x_corne,y_corne;x_corne+wide,y_corne;x_corne+wide,y_corne+heie;x_corne,y_corne+heie;x_corne,y_corne];
+        erasinds = inpolygon(midpoints(:,1),midpoints(:,2),boundbox(:,1),boundbox(:,2));
+        midpoints(erasinds,:) = [];
+        hold off
+        imshow(binaryBasisImage)
+        hold on
+        scatter(strongCorners(:,1),strongCorners(:,2),'g+');
+        scatter(midpoints(:,1),midpoints(:,2),'r','filled');
+        scatter(center(:,1),center(:,2),'b','filled');
+        % close
+        prompt = 'Do you want to remove more edge points?: (yes or no) ';
+        removebool = input(prompt,'s');
+        if isequal(removebool,'yes')
+            
+        else
+            looper = false;
+        end
+    end
+    % hold off
+    % imshow(binaryBasisImage)
+    % hold on
+    % scatter(strongCorners(:,1),strongCorners(:,2),'g+');
 
-
+   
 
 
     
@@ -1715,6 +1908,50 @@ if isequal(boolcorner,'d')
     else
         cornerMags = ones(Xr,Xc).*100000;
 
+    end
+
+    objectives = ["1.25", "4", "10", "20"];
+    mapping = [0, 1.28/1000, 0, 0]; % mm/pixel
+    objdist = dictionary(objectives,mapping);
+    if isempty(center)
+        prompt = input('Do you want to add a center outside the image?: ','s');
+        if isequal(prompt,'y')
+            prompt = input('What objective did you image with: ','s');
+            scale_f = objdist(prompt);
+            len = input('What is the center to corner distance in the device (in mm)?: ','s');
+            pix_len = str2num(len)/scale_f;
+
+
+            % [~,close_cen] = max(min(midMags,[],3)+min(cornerMags,[],3),[],'all');
+            % closest_cen = [X(close_cen),Y(close_cen)];
+            closest_cen = [mean(pos(:,1)),mean(pos(:,2))];
+            slope = (closest_cen(1,2)-strongCorners(1,2))/(closest_cen(1,1)-strongCorners(1,1));
+            
+            if closest_cen(1,1) < strongCorners(1,1)
+                xsign = -1;
+            else
+                xsign = 1;
+            end
+            if closest_cen(1,2) < strongCorners(1,2)
+                ysign = -1;
+            else
+                ysign = 1;
+            end
+            diffx = abs(closest_cen(1,1)-strongCorners(1,1));
+            diffy = abs(closest_cen(1,2)-strongCorners(1,2));
+            origin = strongCorners;
+            tempx = diffx*xsign;
+            tempx = closest_cen(1,1);
+            tempy = diffy*ysign;
+            tempy = closest_cen(1,2);
+            centernorm = norm(closest_cen-origin);
+            while centernorm < pix_len
+                tempx = tempx + xsign;
+                tempy = (tempx-origin(1))*slope+origin(2);
+                centernorm = norm([tempx,tempy]-origin);
+            end
+            center = [tempx,tempy];
+        end
     end
 
     centerMags = zeros(Xr,Xc,length(center(:,1)));
@@ -1913,7 +2150,11 @@ elseif isequal(boolcorner,'r')
         
     else
         scatter(xp,yp);
-        center = spos(1:30:end,:);
+        prompt = input('Do you want to use a centroid or skeleton: (c or s)','s');
+        if isequal(prompt,'s')
+            center = spos(1:30:end,:);
+
+        end
     end
 
     nexttile
@@ -2410,7 +2651,7 @@ if isequal(prompt,'y')
         midmask(:,:,i) = indmat(:,:,i) == 1;
     end
     [yspan,xspan] = size(basisImage);
-    [XS,YS] = meshgrid(1:1:xspan,1:1:yspan);
+    [XS,YS] = meshgrid(1:1:yspan,1:1:xspan);
     XS = reshape(XS,1,[]);
     YS = reshape(YS,1,[]);
     % 1 --> Edge 
@@ -2449,7 +2690,7 @@ if isequal(prompt,'y')
 
         
        
-        photomaskcorn = zeros(xspan,yspan);
+        photomaskcorn = zeros(yspan,xspan);
         if ~isempty(strongCorners)
             for q = 1:length(strongCorners(:,1))
                 plot(temp(cornind==q,1),temp(cornind==q,2),'g.','MarkerSize',12);
@@ -2483,27 +2724,32 @@ if isequal(prompt,'y')
         temp = double([X(logical(cenmask(:,:,i))),Y(logical(cenmask(:,:,i)))]);
         tempind = inpolygon(temp(:,1),temp(:,2),pos(:,1),pos(:,2));
         temp = temp(tempind,:);
-        [centerind,Ce] = kmeans(temp,1,'Replicates',5,'Options',opts);
-        plot(temp(centerind==1,1),temp(centerind==1,2),'b.','MarkerSize',12);
-        % plot(Ce(:,1),Ce(:,2),'bx','MarkerSize',15);
-        photomaskcen = zeros(xspan,yspan);
-        temp2 = temp(centerind==1,:);
-        temp2 = unique(temp2,'rows','stable');
-        boundind = boundary(temp2(:,1),temp2(:,2),0.5);
-        if length(temp2(:,1)) == 1
-            maskinds = inpolygon(XS,YS,temp2(:,1),temp2(:,2));
-            photomask(maskinds) = 1;
-
-        elseif isempty(boundind)
-            boundpoints = interppolygon(temp2,60,'linear');
-            plot(boundpoints(:,1),boundpoints(:,2));
-            [maskinds] = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
-            photomaskcen(maskinds) = 1;
+        photomaskcen = zeros(yspan,xspan);
+        if ~isempty(temp)
+            [centerind,Ce] = kmeans(temp,1,'Replicates',5,'Options',opts);
+            plot(temp(centerind==1,1),temp(centerind==1,2),'b.','MarkerSize',12);
+            % plot(Ce(:,1),Ce(:,2),'bx','MarkerSize',15);
+            % photomaskcen = zeros(xspan,yspan);
+            temp2 = temp(centerind==1,:);
+            temp2 = unique(temp2,'rows','stable');
+            boundind = boundary(temp2(:,1),temp2(:,2),0.5);
+            if length(temp2(:,1)) == 1
+                maskinds = inpolygon(XS,YS,temp2(:,1),temp2(:,2));
+                photomask(maskinds) = 1;
+    
+            elseif isempty(boundind)
+                boundpoints = interppolygon(temp2,60,'linear');
+                plot(boundpoints(:,1),boundpoints(:,2));
+                [maskinds] = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
+                photomaskcen(maskinds) = 1;
+            else
+                boundpoints = interppolygon(temp2(boundind,:),60,'linear');
+                plot(boundpoints(:,1),boundpoints(:,2));
+                maskinds = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
+                photomaskcen(maskinds) = 1;
+            end
         else
-            boundpoints = interppolygon(temp2(boundind,:),60,'linear');
-            plot(boundpoints(:,1),boundpoints(:,2));
-            maskinds = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
-            photomaskcen(maskinds) = 1;
+
         end
     
         temp = double([X(logical(midmask(:,:,i))),Y(logical(midmask(:,:,i)))]);
@@ -2550,7 +2796,7 @@ if isequal(prompt,'y')
         % text(-10,-10,num2str(sum(photomaskedge,'all')));
         % hold off;
     
-        photomaskedge = zeros(xspan,yspan);
+        photomaskedge = zeros(yspan,xspan);
         for q = 1:clusterNum
             temp2 = temp(midind==q,:);
             temp2 = unique(temp2,'rows','stable');
@@ -2696,23 +2942,30 @@ tic
 
 timevec = linspace(0,1,num_images);
 
-fig1 = figure;
-for n = 1:section_num
-    plot(timevec,norm_binned_vals(n,:))
-    hold on 
+if linebool
+    fig1 = figure;
+    for n = 1:section_num
+        plot(timevec,norm_binned_vals(n,:))
+        hold on 
+    
+    end
+    hold off
+    
+    xlabel('Normalized Time');
+    ylabel('Normalized Intensity');
+    fig1.Color = 'w';
 
+     Legend=cell(section_num,1);
+     for iter=1:section_num
+       Legend{iter}=strcat('r', num2str(iter));
+     end
+     legend(Legend);
+else
+    Legend=cell(section_num,1);
+     for iter=1:section_num
+       Legend{iter}=strcat('r', num2str(iter));
+     end
 end
-hold off
-
-xlabel('Normalized Time');
-ylabel('Normalized Intensity');
-fig1.Color = 'w';
-
- Legend=cell(section_num,1);
- for iter=1:section_num
-   Legend{iter}=strcat('r', num2str(iter));
- end
- legend(Legend);
 
 
 disp("Plotting time");
