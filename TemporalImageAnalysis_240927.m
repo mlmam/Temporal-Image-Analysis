@@ -1913,7 +1913,11 @@ elseif isequal(boolcorner,'r')
         
     else
         scatter(xp,yp);
-        center = spos(1:30:end,:);
+        prompt = input('Do you want to use a centroid or skeleton: (c or s)','s');
+        if isequal(prompt,'s')
+            center = spos(1:30:end,:);
+
+        end
     end
 
     nexttile
@@ -2225,6 +2229,7 @@ linevalues_cumulative_c = linevalues_cumulative;
 prompt = input('Did you do lineplot analysis?: (y/n): ','s');
 if isequal(prompt,'y')
     r_values = linspace(0,1,max(num_points))*radius_mm;
+    linebool = true;
     prompt = 'How many radial sections? ';
     section_num = input(prompt);
     if isempty(section_num)
@@ -2357,7 +2362,7 @@ if isequal(prompt,'y')
     end
 
 else
-
+    linebool = false;
 end
 
 bCenterMags = nCenterMags/255;
@@ -2695,23 +2700,30 @@ tic
 
 timevec = linspace(0,1,num_images);
 
-fig1 = figure;
-for n = 1:section_num
-    plot(timevec,norm_binned_vals(n,:))
-    hold on 
+if linebool
+    fig1 = figure;
+    for n = 1:section_num
+        plot(timevec,norm_binned_vals(n,:))
+        hold on 
+    
+    end
+    hold off
+    
+    xlabel('Normalized Time');
+    ylabel('Normalized Intensity');
+    fig1.Color = 'w';
 
+     Legend=cell(section_num,1);
+     for iter=1:section_num
+       Legend{iter}=strcat('r', num2str(iter));
+     end
+     legend(Legend);
+else
+    Legend=cell(section_num,1);
+     for iter=1:section_num
+       Legend{iter}=strcat('r', num2str(iter));
+     end
 end
-hold off
-
-xlabel('Normalized Time');
-ylabel('Normalized Intensity');
-fig1.Color = 'w';
-
- Legend=cell(section_num,1);
- for iter=1:section_num
-   Legend{iter}=strcat('r', num2str(iter));
- end
- legend(Legend);
 
 
 disp("Plotting time");
