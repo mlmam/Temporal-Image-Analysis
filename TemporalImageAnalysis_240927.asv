@@ -2432,32 +2432,46 @@ if isequal(prompt,'y')
         imshow(basisImage);
         hold on;
         temp = double([X(logical(cornmask(:,:,i))),Y(logical(cornmask(:,:,i)))]);
+        temp = unique(temp,'rows','stable');
         opts = statset('Display','off');
-        [cornind,Co] = kmeans(temp,length(strongCorners(:,1)),'Replicates',5,'Options',opts);
+        if length(temp(:,1)) <= 1
+            temp = strongCorners;
+        end
+        if isempty(strongCorners)
+
+        else
+            [cornind,Co] = kmeans(temp,length(strongCorners(:,1)),'Replicates',5,'Options',opts);
+        end
+
+        
        
         photomaskcorn = zeros(xspan,yspan);
-        for q = 1:length(strongCorners(:,1))
-            plot(temp(cornind==q,1),temp(cornind==q,2),'g.','MarkerSize',12);
-            
-            temp2 = temp(cornind==q,:);
-            temp2 = unique(temp2,'rows','stable');
-            boundind = boundary(temp2(:,1),temp2(:,2),shrink);
-            if length(temp2(:,1)) == 1
-                maskinds = inpolygon(XS,YS,temp2(:,1),temp2(:,2));
-                photomask(maskinds) = 1;
-
-            elseif isempty(boundind)
-                boundpoints = interppolygon(temp2,60,'linear');
-                plot(boundpoints(:,1),boundpoints(:,2));
-                [maskinds] = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
-                photomaskcorn(maskinds) = 1;
-            else
-                boundpoints = interppolygon(temp2(boundind,:),60,'linear');
-                plot(boundpoints(:,1),boundpoints(:,2));
-                maskinds = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
-                photomaskcorn(maskinds) = 1;
-            end
+        if ~isempty(strongCorners)
+            for q = 1:length(strongCorners(:,1))
+                plot(temp(cornind==q,1),temp(cornind==q,2),'g.','MarkerSize',12);
+                
+                temp2 = temp(cornind==q,:);
+                temp2 = double(unique(temp2,'rows','stable'));
+                boundind = boundary(temp2(:,1),temp2(:,2),shrink);
+                if length(temp2(:,1)) == 1
+                    maskinds = inpolygon(XS,YS,temp2(:,1),temp2(:,2));
+                    photomask(maskinds) = 1;
     
+                elseif isempty(boundind)
+                    boundpoints = interppolygon(temp2,60,'linear');
+                    plot(boundpoints(:,1),boundpoints(:,2));
+                    [maskinds] = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
+                    photomaskcorn(maskinds) = 1;
+                else
+                    boundpoints = interppolygon(temp2(boundind,:),60,'linear');
+                    plot(boundpoints(:,1),boundpoints(:,2));
+                    maskinds = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
+                    photomaskcorn(maskinds) = 1;
+                end
+        
+            end
+        else
+
         end
         % plot(Co(:,1),Co(:,2),'gx','MarkerSize',15);
     
@@ -2489,10 +2503,31 @@ if isequal(prompt,'y')
         opts = statset('Display','off');
 
         % clusterNum = str2num(prompt)*4;
-        if cutoffs(i) >= 0.5
-            clusterNum = length(strongCorners(:,1));
+        if ~isempty(strongCorners)
+            if cutoffs(i) >= 0.5
+                if length(strongCorners(:,1)) == 1
+                    clusterNum = 10;
+                else
+                    clusterNum = length(strongCorners(:,1))*2;
+                end
+            else
+                if length(strongCorners(:,1)) == 1
+                    clusterNum = 10;
+                else
+                    clusterNum = length(strongCorners(:,1))*4;
+                end
+            end
         else
-            clusterNum = length(strongCorners(:,1))*4;
+            if cutoffs(i) >= 0.5
+                
+                clusterNum = 10;
+                
+            else
+                
+                clusterNum = 10;
+            
+                
+            end
         end
         
         [midind,Mi] = kmeans(temp,clusterNum,'Replicates',5,'Options',opts,'Distance','cityblock');
@@ -2549,6 +2584,48 @@ if isequal(prompt,'y')
         end
     
     end
+
+    Cornfig = figure;
+    Cornfig.Color = 'w';
+    tl3 = tiledlayout(1,3);
+    tl3.Padding = 'compact';
+    tl3.TileSpacing = 'compact';
+    set(gcf, 'units','normalized','outerposition',[0 0 1 1]);
+    nexttile
+    title('Corner Points')
+    ylabel('Fluorescent Intensity')
+    xlabel('Time')
+    hold on
+    for i=1:length(cutoffs)
+        plot(linspace(0,1,num_images),integrated_pixels(:,i,2),'LineWidth',sqrt(i));
+        % legend(num2str(cutoffs(i)));
+    end
+    legendCell = cellstr(num2str(cutoffs', 'Threshold=%.2f'));
+    legend(legendCell);
+    
+    % Edgefig = figure;
+    nexttile
+    title('Edge Points')
+    ylabel('Fluorescent Intensity')
+    xlabel('Time')
+    hold on
+    for i=1:length(cutoffs)
+        plot(linspace(0,1,num_images),integrated_pixels(:,i,1),'LineWidth',sqrt(i));
+        % legend(num2str(cutoffs(i)));
+    end
+    legend(legendCell);
+    
+    % Cenfig = figure;
+    nexttile
+    title('Center Points')
+    ylabel('Fluorescent Intensity')
+    xlabel('Time')
+    hold on
+    for i=1:length(cutoffs)
+        plot(linspace(0,1,num_images),integrated_pixels(:,i,3),'LineWidth',sqrt(i));
+        % legend(num2str(cutoffs(i)));
+    end
+    legend(legendCell);
     
     warning('on','all')
 elseif exist('integrated_pixels','var')
