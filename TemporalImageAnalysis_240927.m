@@ -2432,44 +2432,56 @@ if isequal(prompt,'y')
         imshow(basisImage);
         hold on;
         temp = double([X(logical(cornmask(:,:,i))),Y(logical(cornmask(:,:,i)))]);
+        tempind = inpolygon(temp(:,1),temp(:,2),pos(:,1),pos(:,2));
+        temp = temp(tempind,:);
+
         temp = unique(temp,'rows','stable');
         opts = statset('Display','off');
-        if length(temp(:,1)) == 1
+        if length(temp(:,1)) <= 1
             temp = strongCorners;
         end
-        [cornind,Co] = kmeans(temp,length(strongCorners(:,1)),'Replicates',5,'Options',opts);
+        if isempty(strongCorners)
 
-        if i == 19
-            jlkjlk = 1;
+        else
+            [cornind,Co] = kmeans(temp,length(strongCorners(:,1)),'Replicates',5,'Options',opts);
         end
+
+        
        
         photomaskcorn = zeros(xspan,yspan);
-        for q = 1:length(strongCorners(:,1))
-            plot(temp(cornind==q,1),temp(cornind==q,2),'g.','MarkerSize',12);
-            
-            temp2 = temp(cornind==q,:);
-            temp2 = double(unique(temp2,'rows','stable'));
-            boundind = boundary(temp2(:,1),temp2(:,2),shrink);
-            if length(temp2(:,1)) == 1
-                maskinds = inpolygon(XS,YS,temp2(:,1),temp2(:,2));
-                photomask(maskinds) = 1;
-
-            elseif isempty(boundind)
-                boundpoints = interppolygon(temp2,60,'linear');
-                plot(boundpoints(:,1),boundpoints(:,2));
-                [maskinds] = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
-                photomaskcorn(maskinds) = 1;
-            else
-                boundpoints = interppolygon(temp2(boundind,:),60,'linear');
-                plot(boundpoints(:,1),boundpoints(:,2));
-                maskinds = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
-                photomaskcorn(maskinds) = 1;
-            end
+        if ~isempty(strongCorners)
+            for q = 1:length(strongCorners(:,1))
+                plot(temp(cornind==q,1),temp(cornind==q,2),'g.','MarkerSize',12);
+                
+                temp2 = temp(cornind==q,:);
+                temp2 = double(unique(temp2,'rows','stable'));
+                % temp2ind = inpolygon(temp2(:,1),temp(:,2),)
+                boundind = boundary(temp2(:,1),temp2(:,2),shrink);
+                if length(temp2(:,1)) == 1
+                    maskinds = inpolygon(XS,YS,temp2(:,1),temp2(:,2));
+                    photomask(maskinds) = 1;
     
+                elseif isempty(boundind)
+                    boundpoints = interppolygon(temp2,60,'linear');
+                    plot(boundpoints(:,1),boundpoints(:,2));
+                    [maskinds] = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
+                    photomaskcorn(maskinds) = 1;
+                else
+                    boundpoints = interppolygon(temp2(boundind,:),60,'linear');
+                    plot(boundpoints(:,1),boundpoints(:,2));
+                    maskinds = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
+                    photomaskcorn(maskinds) = 1;
+                end
+        
+            end
+        else
+
         end
         % plot(Co(:,1),Co(:,2),'gx','MarkerSize',15);
     
         temp = double([X(logical(cenmask(:,:,i))),Y(logical(cenmask(:,:,i)))]);
+        tempind = inpolygon(temp(:,1),temp(:,2),pos(:,1),pos(:,2));
+        temp = temp(tempind,:);
         [centerind,Ce] = kmeans(temp,1,'Replicates',5,'Options',opts);
         plot(temp(centerind==1,1),temp(centerind==1,2),'b.','MarkerSize',12);
         % plot(Ce(:,1),Ce(:,2),'bx','MarkerSize',15);
@@ -2494,13 +2506,36 @@ if isequal(prompt,'y')
         end
     
         temp = double([X(logical(midmask(:,:,i))),Y(logical(midmask(:,:,i)))]);
+        tempind = inpolygon(temp(:,1),temp(:,2),pos(:,1),pos(:,2));
+        temp = temp(tempind,:);
         opts = statset('Display','off');
 
         % clusterNum = str2num(prompt)*4;
-        if cutoffs(i) >= 0.5
-            clusterNum = length(strongCorners(:,1))*2;
+        if ~isempty(strongCorners)
+            if cutoffs(i) >= 0.5
+                if length(strongCorners(:,1)) == 1
+                    clusterNum = length(midpoints(:,1));
+                else
+                    clusterNum = length(strongCorners(:,1))*2;
+                end
+            else
+                if length(strongCorners(:,1)) == 1
+                    clusterNum = length(midpoints(:,1))-5;
+                else
+                    clusterNum = length(strongCorners(:,1))*4;
+                end
+            end
         else
-            clusterNum = length(strongCorners(:,1))*4;
+            if cutoffs(i) >= 0.5 && cutoffs(i) < 0.7
+                
+                clusterNum = length(midpoints(:,1));
+                
+            elseif cutoffs(i) >= 0.7
+                
+                clusterNum = 6;
+            else
+                clusterNum = length(midpoints(:,1))-5;
+            end
         end
         
         [midind,Mi] = kmeans(temp,clusterNum,'Replicates',5,'Options',opts,'Distance','cityblock');
