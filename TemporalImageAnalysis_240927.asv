@@ -1864,6 +1864,139 @@ if isequal(boolcorner,'d')
     %generates a matrix of the magnitudes between each point in the grid
     %defined above and each midpoint
 
+    objectives = ["1.25", "4", "10", "20"];
+    mapping = [0, 1.28/1000, 0, 0]; % mm/pixel
+    objdist = dictionary(objectives,mapping);
+    if isempty(center)
+        prompt = input('Do you want to add a center & edges outside the image?: ','s');
+        if isequal(prompt,'y')
+            prompt = input('What objective did you image with: ','s');
+            scale_f = objdist(prompt);
+            len = input('What is the center to corner distance in the device (in mm)?: ','s');
+            cornlen = input('What is the corner to corner distance in the device (in mm)?: ','s');
+            pix_len = str2num(len)/scale_f;
+            corn_len = str2num(cornlen)/scale_f;
+            
+            
+            midpoints = [];
+            button = 1;
+            hWaitbar = waitbar(0, 'Hit Cancel When Done', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
+            while true
+                if ~ishandle(hWaitbar)
+                        % Stop the if cancel button was pressed
+                        disp('Stopped by user');
+                        break;
+                elseif button ~= 2
+                    waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
+    
+                    zoom on
+                    zoom reset
+    
+                    [xcen,ycen,button] = ginput(1);
+                    if button == 2
+                        continue
+                    elseif button == 1
+                        clicked_point = [xcen,ycen];
+                        closest_point = [NaN, NaN];
+                        minDist = Inf;
+                        for idx = 1:length(pos(:,1))
+                            if norm(clicked_point - pos(idx,:)) < minDist
+                                minDist = norm(clicked_point - pos(idx,:));
+                                closest_point = pos(idx,:);
+                            end
+                        end
+                
+                        midpoints = [midpoints;round(closest_point)];
+                    elseif button == 3
+                        clicked_point = [xcen,ycen];
+                        closest_point = [NaN, NaN];
+                        minDist = Inf;
+                        for idx = 1:length(midpoints(:,1))
+                            if norm(clicked_point - midpoints(idx,:)) < minDist
+                                minDist = norm(clicked_point - midpoints(idx,:));
+                                closest_point = midpoints(idx,:);
+                            end
+                        end
+                
+                        midpoints(sum(midpoints,2)==sum(closest_point),:) = [];
+                    end
+    
+                    % strongCorners(sum(strongCorners,2)==sum(closest_point),:) = [];
+                    % scatter(strongCorners(:,1),strongCorners(:,2),'r','filled');
+                    hold off
+                    imshow(mask)
+                    hold on
+                    scatter(center(:,1),center(:,2),[],'b','filled');
+                    scatter(midpoints(:,1),midpoints(:,2),[],'r','filled');
+                    scatter(strongCorners(:,1),strongCorners(:,2),[],'g+');
+                    
+    
+                end
+                drawnow
+            end
+            
+
+
+            % [~,close_cen] = max(min(midMags,[],3)+min(cornerMags,[],3),[],'all');
+            % closest_cen = [X(close_cen),Y(close_cen)];
+            closest_cen = [mean(pos(:,1)),mean(pos(:,2))];
+            closest_corn1 = midpoints(1,:);
+
+            closest_corn2 = midpoints(2,:);
+            slope = (closest_cen(1,2)-strongCorners(1,2))/(closest_cen(1,1)-strongCorners(1,1));
+            slopewall1 = (closest_corn1(1,2)-strongCorners(1,2))/(closest_corn1(1,1)-strongCorners(1,1));
+            slopewall2 = (closest_corn2(1,2)-strongCorners(1,2))/(closest_corn2(1,1)-strongCorners(1,1));
+            
+            if closest_cen(1,1) < strongCorners(1,1)
+                xsign = -1;
+            else
+                xsign = 1;
+            end
+            if closest_cen(1,2) < strongCorners(1,2)
+                ysign = -1;
+            else
+                ysign = 1;
+            end
+            midpoints = [];
+
+            % diffx = abs(closest_cen(1,1)-strongCorners(1,1));
+            % diffy = abs(closest_cen(1,2)-strongCorners(1,2));
+            origin = strongCorners;
+            % tempx = diffx*xsign;
+            tempx = closest_cen(1,1);
+            % tempy = diffy*ysign;
+            tempy = closest_cen(1,2);
+            centernorm = norm(closest_cen-origin);
+            cornnorm1 = norm(closest_corn1-origin);
+            cornnorm2 = norm(closest_corn2-origin);
+            while centernorm < pix_len
+                tempx = tempx + xsign;
+                tempy = (tempx-origin(1))*slope+origin(2);
+                centernorm = norm([tempx,tempy]-origin);
+            end
+            center = [tempx,tempy];
+            line([origin(1) tempx],[origin(2) tempy]);
+            tempx = closest_corn1(1);
+            tempy = closest_corn1(2);
+            while cornnorm1 < corn_len
+                tempx = tempx + xsign;
+                tempy = (tempx-origin(1))*slopewall1+origin(2);
+                cornnorm1 = norm([tempx,tempy]-origin);
+            end
+            midpoints = [midpoints;tempx,tempy];
+            line([origin(1) tempx],[origin(2) tempy]);
+            tempx = closest_corn2(1);
+            tempy = closest_corn2(2);
+            while cornnorm2 < pix_len
+                tempx = tempx + xsign;
+                tempy = (tempx-origin(1))*slopewall2+origin(2);
+                cornnorm2 = norm([tempx,tempy]-origin);
+            end
+            midpoints = [midpoints;tempx,tempy];
+            line([origin(1) tempx],[origin(2) tempy]);
+        end
+    end
+
     midMags = zeros(Xr,Xc,length(midpoints(:,1)));
     if ~isempty(midpoints)
         for q = 1:length(midpoints(:,1))
@@ -1908,50 +2041,6 @@ if isequal(boolcorner,'d')
     else
         cornerMags = ones(Xr,Xc).*100000;
 
-    end
-
-    objectives = ["1.25", "4", "10", "20"];
-    mapping = [0, 1.28/1000, 0, 0]; % mm/pixel
-    objdist = dictionary(objectives,mapping);
-    if isempty(center)
-        prompt = input('Do you want to add a center outside the image?: ','s');
-        if isequal(prompt,'y')
-            prompt = input('What objective did you image with: ','s');
-            scale_f = objdist(prompt);
-            len = input('What is the center to corner distance in the device (in mm)?: ','s');
-            pix_len = str2num(len)/scale_f;
-
-
-            % [~,close_cen] = max(min(midMags,[],3)+min(cornerMags,[],3),[],'all');
-            % closest_cen = [X(close_cen),Y(close_cen)];
-            closest_cen = [mean(pos(:,1)),mean(pos(:,2))];
-            slope = (closest_cen(1,2)-strongCorners(1,2))/(closest_cen(1,1)-strongCorners(1,1));
-            
-            if closest_cen(1,1) < strongCorners(1,1)
-                xsign = -1;
-            else
-                xsign = 1;
-            end
-            if closest_cen(1,2) < strongCorners(1,2)
-                ysign = -1;
-            else
-                ysign = 1;
-            end
-            diffx = abs(closest_cen(1,1)-strongCorners(1,1));
-            diffy = abs(closest_cen(1,2)-strongCorners(1,2));
-            origin = strongCorners;
-            tempx = diffx*xsign;
-            tempx = closest_cen(1,1);
-            tempy = diffy*ysign;
-            tempy = closest_cen(1,2);
-            centernorm = norm(closest_cen-origin);
-            while centernorm < pix_len
-                tempx = tempx + xsign;
-                tempy = (tempx-origin(1))*slope+origin(2);
-                centernorm = norm([tempx,tempy]-origin);
-            end
-            center = [tempx,tempy];
-        end
     end
 
     centerMags = zeros(Xr,Xc,length(center(:,1)));
@@ -2651,7 +2740,7 @@ if isequal(prompt,'y')
         midmask(:,:,i) = indmat(:,:,i) == 1;
     end
     [yspan,xspan] = size(basisImage);
-    [XS,YS] = meshgrid(1:1:yspan,1:1:xspan);
+    [XS,YS] = meshgrid(1:1:xspan,1:1:yspan);
     XS = reshape(XS,1,[]);
     YS = reshape(YS,1,[]);
     % 1 --> Edge 
@@ -2701,7 +2790,7 @@ if isequal(prompt,'y')
                 boundind = boundary(temp2(:,1),temp2(:,2),shrink);
                 if length(temp2(:,1)) == 1
                     maskinds = inpolygon(XS,YS,temp2(:,1),temp2(:,2));
-                    photomask(maskinds) = 1;
+                    photomaskcorn(maskinds) = 1;
     
                 elseif isempty(boundind)
                     boundpoints = interppolygon(temp2,60,'linear');
@@ -2735,7 +2824,7 @@ if isequal(prompt,'y')
             boundind = boundary(temp2(:,1),temp2(:,2),0.5);
             if length(temp2(:,1)) == 1
                 maskinds = inpolygon(XS,YS,temp2(:,1),temp2(:,2));
-                photomask(maskinds) = 1;
+                photomaskcen(maskinds) = 1;
     
             elseif isempty(boundind)
                 boundpoints = interppolygon(temp2,60,'linear');
@@ -2803,7 +2892,7 @@ if isequal(prompt,'y')
             boundind = boundary(temp2(:,1),temp2(:,2),shrink);
             if length(temp2(:,1)) == 1
                 maskinds = inpolygon(XS,YS,temp2(:,1),temp2(:,2));
-                photomask(maskinds) = 1;
+                photomaskedge(maskinds) = 1;
 
             elseif isempty(boundind)
                 boundpoints = interppolygon(temp2,60,'linear');
