@@ -8,7 +8,7 @@ tic
 %defines image directory
 %set file path to '' if you only want to select images in the folder this
 %code file is in
-filepath = 'C:\Users\mmani\Documents\D6_sub50_output';
+filepath = 'C:\Users\mmani\Documents\D7_sub50_output';
 % filepath = '';
 imagepath = [filepath  '\*.png'];
 % imagepath = [filepath  '\ConcentricSquare.jpg'];
@@ -1976,6 +1976,7 @@ if isequal(boolcorner,'d')
             end
             center = [tempx,tempy];
             line([origin(1) tempx],[origin(2) tempy]);
+            
             tempx = closest_corn1(1);
             tempy = closest_corn1(2);
             while cornnorm1 < corn_len
@@ -1985,10 +1986,34 @@ if isequal(boolcorner,'d')
             end
             midpoints = [midpoints;tempx,tempy];
             line([origin(1) tempx],[origin(2) tempy]);
+
             tempx = closest_corn2(1);
             tempy = closest_corn2(2);
             while cornnorm2 < corn_len
                 tempx = tempx + xsign;
+                tempy = (tempx-origin(1))*slopewall2+origin(2);
+                cornnorm2 = norm([tempx,tempy]-origin);
+            end
+            midpoints = [midpoints;tempx,tempy];
+            line([origin(1) tempx],[origin(2) tempy]);
+
+            % centernorm = norm(closest_cen-origin);
+            tempx = closest_corn1(1);
+            tempy = closest_corn1(2);
+            cornnorm1 = norm(closest_corn1-origin);
+            cornnorm2 = norm(closest_corn2-origin);
+            while cornnorm1 < corn_len
+                tempx = tempx - xsign;
+                tempy = (tempx-origin(1))*slopewall1+origin(2);
+                cornnorm1 = norm([tempx,tempy]-origin);
+            end
+            midpoints = [midpoints;tempx,tempy];
+            line([origin(1) tempx],[origin(2) tempy]);
+
+            tempx = closest_corn2(1);
+            tempy = closest_corn2(2);
+            while cornnorm2 < corn_len
+                tempx = tempx - xsign;
                 tempy = (tempx-origin(1))*slopewall2+origin(2);
                 cornnorm2 = norm([tempx,tempy]-origin);
             end

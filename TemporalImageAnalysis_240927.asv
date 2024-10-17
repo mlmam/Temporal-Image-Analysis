@@ -8,7 +8,7 @@ tic
 %defines image directory
 %set file path to '' if you only want to select images in the folder this
 %code file is in
-filepath = 'C:\Users\mmani\Documents\D6_sub50_output';
+filepath = 'C:\Users\mmani\Documents\D7_sub50_output';
 % filepath = '';
 imagepath = [filepath  '\*.png'];
 % imagepath = [filepath  '\ConcentricSquare.jpg'];
@@ -1875,7 +1875,7 @@ if isequal(boolcorner,'d')
             len = input('What is the center to corner distance in the device (in mm)?: ','s');
             cornlen = input('What is the corner to corner distance in the device (in mm)?: ','s');
             pix_len = str2num(len)/scale_f;
-            corn_len = str2num(cornlen)/scale_f;
+            corn_len = (str2num(cornlen)/2)/scale_f;
             
             
             midpoints = [];
@@ -1991,6 +1991,27 @@ if isequal(boolcorner,'d')
                 tempx = tempx + xsign;
                 tempy = (tempx-origin(1))*slopewall2+origin(2);
                 cornnorm2 = norm([tempx,tempy]-origin);
+            end
+            midpoints = [midpoints;tempx,tempy];
+            line([origin(1) tempx],[origin(2) tempy]);
+            % centernorm = norm(closest_cen-origin);
+            tempx = closest_corn1(1);
+            tempy = closest_corn1(2);
+            cornnorm1 = norm(closest_corn1-origin);
+            cornnorm2 = norm(closest_corn2-origin);
+            while cornnorm1 < corn_len
+                tempx = tempx - xsign;
+                tempy = (tempx-origin(1))*slopewall1+origin(2);
+                cornnorm1 = norm([tempx,tempy]-origin);
+            end
+            midpoints = [midpoints;tempx,tempy];
+            line([origin(1) tempx],[origin(2) tempy]);
+            tempx = closest_corn2(1);
+            tempy = closest_corn2(2);
+            while cornnorm2 < corn_len
+                tempx = tempx - xsign;
+                tempy = (tempx-origin(1))*slopewall2+origin(2);
+                cornnorm1 = norm([tempx,tempy]-origin);
             end
             midpoints = [midpoints;tempx,tempy];
             line([origin(1) tempx],[origin(2) tempy]);
@@ -2859,7 +2880,7 @@ if isequal(prompt,'y')
                 end
             else
                 if length(strongCorners(:,1)) == 1
-                    clusterNum = length(midpoints(:,1))-5;
+                    clusterNum = max([length(midpoints(:,1))-5,1]);
                 else
                     clusterNum = length(strongCorners(:,1))*4;
                 end
@@ -2873,7 +2894,7 @@ if isequal(prompt,'y')
                 
                 clusterNum = 6;
             else
-                clusterNum = length(midpoints(:,1))-5;
+                clusterNum = max([length(midpoints(:,1))-5,1]);
             end
         end
         
