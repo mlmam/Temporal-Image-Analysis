@@ -1875,7 +1875,7 @@ if isequal(boolcorner,'d')
             len = input('What is the center to corner distance in the device (in mm)?: ','s');
             cornlen = input('What is the corner to corner distance in the device (in mm)?: ','s');
             pix_len = str2num(len)/scale_f;
-            corn_len = str2num(cornlen)/scale_f;
+            corn_len = (str2num(cornlen)/2)/scale_f;
             
             
             midpoints = [];
@@ -1987,7 +1987,7 @@ if isequal(boolcorner,'d')
             line([origin(1) tempx],[origin(2) tempy]);
             tempx = closest_corn2(1);
             tempy = closest_corn2(2);
-            while cornnorm2 < pix_len
+            while cornnorm2 < corn_len
                 tempx = tempx + xsign;
                 tempy = (tempx-origin(1))*slopewall2+origin(2);
                 cornnorm2 = norm([tempx,tempy]-origin);
@@ -2254,6 +2254,9 @@ elseif isequal(boolcorner,'r')
     scatter(midpoints(:,1),midpoints(:,2),'r','filled');
     scatter(center(:,1),center(:,2),'b','filled');
     scatter(strongCorners(:,1),strongCorners(:,2),'g+');
+    line([origin(1) center(1)],[origin(2) center(2)]);
+    line([origin(1) midpoints(1,1)],[origin(2) midpoints(1,2)]);
+    line([origin(1) midpoints(2,1)],[origin(2) midpoints(2,2)]);
 
     c = uint8(cat(3,nMidMags,nCornerMags,nCenterMags));
     % 
@@ -2856,7 +2859,7 @@ if isequal(prompt,'y')
                 end
             else
                 if length(strongCorners(:,1)) == 1
-                    clusterNum = length(midpoints(:,1))-5;
+                    clusterNum = max([length(midpoints(:,1))-5,1]);
                 else
                     clusterNum = length(strongCorners(:,1))*4;
                 end
@@ -2870,7 +2873,7 @@ if isequal(prompt,'y')
                 
                 clusterNum = 6;
             else
-                clusterNum = length(midpoints(:,1))-5;
+                clusterNum = max([length(midpoints(:,1))-5,1]);
             end
         end
         

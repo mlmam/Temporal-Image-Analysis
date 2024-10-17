@@ -1987,7 +1987,7 @@ if isequal(boolcorner,'d')
             line([origin(1) tempx],[origin(2) tempy]);
             tempx = closest_corn2(1);
             tempy = closest_corn2(2);
-            while cornnorm2 < pix_len
+            while cornnorm2 < corn_len
                 tempx = tempx + xsign;
                 tempy = (tempx-origin(1))*slopewall2+origin(2);
                 cornnorm2 = norm([tempx,tempy]-origin);
@@ -2254,6 +2254,9 @@ elseif isequal(boolcorner,'r')
     scatter(midpoints(:,1),midpoints(:,2),'r','filled');
     scatter(center(:,1),center(:,2),'b','filled');
     scatter(strongCorners(:,1),strongCorners(:,2),'g+');
+    line([origin(1) center(1)],[origin(2) center(2)]);
+    line([origin(1) midpoints(1,1)],[origin(2) midpoints(1,2)]);
+    line([origin(1) midpoints(2,1)],[origin(2) midpoints(2,2)]);
 
     c = uint8(cat(3,nMidMags,nCornerMags,nCenterMags));
     % 
@@ -2874,38 +2877,43 @@ if isequal(prompt,'y')
             end
         end
         
-        [midind,Mi] = kmeans(temp,clusterNum,'Replicates',5,'Options',opts,'Distance','cityblock');
-        % kfig = figure;
-        % imshow(basisImage);
-        % hold on;
-        for qq = 1:clusterNum
-            plot(temp(midind==qq,1),temp(midind==qq,2),'r.','MarkerSize',12);
-        end
-        % plot(Mi(:,1),Mi(:,2),'rx','MarkerSize',15);
-        % text(-10,-10,num2str(sum(photomaskedge,'all')));
-        % hold off;
-    
-        photomaskedge = zeros(yspan,xspan);
-        for q = 1:clusterNum
-            temp2 = temp(midind==q,:);
-            temp2 = unique(temp2,'rows','stable');
-            boundind = boundary(temp2(:,1),temp2(:,2),shrink);
-            if length(temp2(:,1)) == 1
-                maskinds = inpolygon(XS,YS,temp2(:,1),temp2(:,2));
-                photomaskedge(maskinds) = 1;
 
-            elseif isempty(boundind)
-                boundpoints = interppolygon(temp2,60,'linear');
-                plot(boundpoints(:,1),boundpoints(:,2));
-                [maskinds] = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
-                photomaskedge(maskinds) = 1;
-            else
-                boundpoints = interppolygon(temp2(boundind,:),60,'linear');
-                plot(boundpoints(:,1),boundpoints(:,2));
-                maskinds = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
-                photomaskedge(maskinds) = 1;
+        photomaskedge = zeros(yspan,xspan);
+        if ~isempty(temp)
+            [midind,Mi] = kmeans(temp,clusterNum,'Replicates',5,'Options',opts,'Distance','cityblock');
+            % kfig = figure;
+            % imshow(basisImage);
+            % hold on;
+            for qq = 1:clusterNum
+                plot(temp(midind==qq,1),temp(midind==qq,2),'r.','MarkerSize',12);
             end
+            % plot(Mi(:,1),Mi(:,2),'rx','MarkerSize',15);
+            % text(-10,-10,num2str(sum(photomaskedge,'all')));
+            % hold off;
+        
+            photomaskedge = zeros(yspan,xspan);
+            for q = 1:clusterNum
+                temp2 = temp(midind==q,:);
+                temp2 = unique(temp2,'rows','stable');
+                boundind = boundary(temp2(:,1),temp2(:,2),shrink);
+                if length(temp2(:,1)) == 1
+                    maskinds = inpolygon(XS,YS,temp2(:,1),temp2(:,2));
+                    photomaskedge(maskinds) = 1;
     
+                elseif isempty(boundind)
+                    boundpoints = interppolygon(temp2,60,'linear');
+                    plot(boundpoints(:,1),boundpoints(:,2));
+                    [maskinds] = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
+                    photomaskedge(maskinds) = 1;
+                else
+                    boundpoints = interppolygon(temp2(boundind,:),60,'linear');
+                    plot(boundpoints(:,1),boundpoints(:,2));
+                    maskinds = inpolygon(XS,YS,boundpoints(:,1),boundpoints(:,2));
+                    photomaskedge(maskinds) = 1;
+                end
+        
+            end
+        else
         end
         % text(-10,-10,num2str(sum(photomaskedge,'all')));
         title(['Threshold = '  num2str(cutoffs(i))]);
