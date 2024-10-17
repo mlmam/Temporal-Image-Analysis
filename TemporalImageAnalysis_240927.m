@@ -8,8 +8,8 @@ tic
 %defines image directory
 %set file path to '' if you only want to select images in the folder this
 %code file is in
-filepath = 'C:\Users\mmani\Documents\D7_sub50_output';
-% filepath = '';
+filepath = 'C:\Users\mmani\Documents\D11_sub50_output';
+% filepath = '';yyesyesdd
 imagepath = [filepath  '\*.png'];
 % imagepath = [filepath  '\ConcentricSquare.jpg'];
 imagefiles = dir(imagepath);
@@ -1976,7 +1976,7 @@ if isequal(boolcorner,'d')
             end
             center = [tempx,tempy];
             line([origin(1) tempx],[origin(2) tempy]);
-            
+
             tempx = closest_corn1(1);
             tempy = closest_corn1(2);
             while cornnorm1 < corn_len
@@ -2282,6 +2282,8 @@ elseif isequal(boolcorner,'r')
     line([origin(1) center(1)],[origin(2) center(2)]);
     line([origin(1) midpoints(1,1)],[origin(2) midpoints(1,2)]);
     line([origin(1) midpoints(2,1)],[origin(2) midpoints(2,2)]);
+    line([origin(1) midpoints(3,1)],[origin(2) midpoints(3,2)]);
+    line([origin(1) midpoints(4,1)],[origin(2) midpoints(4,2)]);
 
     c = uint8(cat(3,nMidMags,nCornerMags,nCenterMags));
     % 
@@ -2785,7 +2787,7 @@ if isequal(prompt,'y')
     set(gcf, 'units','normalized','outerposition',[0 0 1 1]);
     % imshow(basisImage);
     % hold on;
-    shrink = 0;
+    shrink = 0.5;
     for i = 1:length(cutoffs)
         nexttile
         imshow(basisImage);
@@ -2849,7 +2851,7 @@ if isequal(prompt,'y')
             % photomaskcen = zeros(xspan,yspan);
             temp2 = temp(centerind==1,:);
             temp2 = unique(temp2,'rows','stable');
-            boundind = boundary(temp2(:,1),temp2(:,2),0.5);
+            boundind = boundary(temp2(:,1),temp2(:,2),0.8);
             if length(temp2(:,1)) == 1
                 maskinds = inpolygon(XS,YS,temp2(:,1),temp2(:,2));
                 photomaskcen(maskinds) = 1;
@@ -2892,13 +2894,13 @@ if isequal(prompt,'y')
         else
             if cutoffs(i) >= 0.5 && cutoffs(i) < 0.7
                 
-                clusterNum = length(midpoints(:,1));
+                clusterNum = 10;
                 
             elseif cutoffs(i) >= 0.7
                 
                 clusterNum = 6;
             else
-                clusterNum = max([length(midpoints(:,1))-5,1]);
+                clusterNum = 10;
             end
         end
         
@@ -3119,31 +3121,31 @@ else
     if exist('binned_vals','var')
 
     else
-        binned_vals = zeros(1,length(Legend));
+        binned_vals = zeros(length(Legend),1);
     end
 
     if exist('norm_binned_vals','var')
 
     else
-        norm_binned_vals = zeros(1,length(Legend));
+        norm_binned_vals = zeros(length(Legend),1);
     end
 
     if exist('std_binned_vals','var')
 
     else
-        std_binned_vals = zeros(1,length(Legend));
+        std_binned_vals = zeros(length(Legend),1);
     end
 
     if exist('norm_std_vals','var')
 
     else
-        norm_std_vals = zeros(1,length(Legend));
+        norm_std_vals = zeros(length(Legend),1);
     end
 
     if exist('line_std_vals','var')
 
     else
-        line_std_vals = zeros(1,length(Legend));
+        line_std_vals = zeros(length(Legend),1);
     end
     
     names2 = string(legendCell);
@@ -3197,11 +3199,11 @@ else
     fprintf(fileID,numformat,line_std_vals);
     fprintf(fileID,'ROI Point Classification Integrated Intensity\n');
     fprintf(fileID,wordformat2,names2+'Edge');
-    fprintf(fileID,numformat2,integrated_pixels(:,:,1));
+    fprintf(fileID,numformat2,integrated_pixels(:,:,1)');
     fprintf(fileID,wordformat2,names2+'Corner');
-    fprintf(fileID,numformat2,integrated_pixels(:,:,2));
+    fprintf(fileID,numformat2,integrated_pixels(:,:,2)');
     fprintf(fileID,wordformat2,names2+'Center');
-    fprintf(fileID,numformat2,integrated_pixels(:,:,3));
+    fprintf(fileID,numformat2,integrated_pixels(:,:,3)');
     fprintf(fileID,'Number of Pixels at Each Threshold\n');
     fprintf(fileID,wordformat2,names2+'Edge');
     fprintf(fileID,numformat2,pixel_counts(:,:,1));
