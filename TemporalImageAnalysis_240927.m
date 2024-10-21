@@ -8,9 +8,9 @@ tic
 %defines image directory
 %set file path to '' if you only want to select images in the folder this
 %code file is in
-filepath = 'C:\Users\mmani\Documents\D11_sub50_output';
+filepath = 'C:\Users\mmani\University of Michigan Dropbox\Matthew Manion\Temporal-Image-Analysis';
 % filepath = '';yyesyesdd
-imagepath = [filepath  '\*.png'];
+imagepath = [filepath  '\D*.png'];
 % imagepath = [filepath  '\ConcentricSquare.jpg'];
 imagefiles = dir(imagepath);
 num_images = length(imagefiles);
@@ -19,20 +19,13 @@ num_images = length(imagefiles);
 %if you want 3 images as basis for circle center & radius, put 4
 basismax = 4;
 radius_mm = 3;
-% draw = false;
-% cir = false;
-% rect = false;
-% drawrect = false;
+
 
 
 
 countt = 1;
 
-% if exist('pos_o','var')
-%     pos = pos_o;
-% end
-
-prompt = 'do you need a basis image & circle + radius? (yes or no): ';
+prompt = 'Do you need a basis image & ROI? (yes or no): ';
 boolbasis = input(prompt,'s');
 i = 1;
 if isequal(boolbasis,'yes')
@@ -120,47 +113,95 @@ if isequal(boolbasis,'yes')
     prompt = 'does this circle look adequate? (yes or no): ';
     verify = input(prompt,'s');
     if isequal(verify,'no')
-        prompt = 'do you want to specify coordinates, estimate as the center of the image, manually set values, or draw? \n (reply spec, est, manu, or draw): ';
-        boolcord = input(prompt,'s');
-        if isequal(boolcord,'est')
-            [row,col] = size(basis_tiff_stack_crop);
-            center = [col/2,row/2];
-            radii = row/2;
-            %basisindex(1) = 1;
-        elseif isequal(boolcord,'spec')
-            prompt = 'The image dimensions are 836x720. enter the pixel coordinates as [x,y] with the brackets: ';
-            center = input(prompt);
-            prompt = 'enter the radius as a pixel number: ';
-            radii = input(prompt);
-            metric = 1;
-        elseif isequal(boolcord,'manu')
-            close all
-            %hWaitbar = waitbar(0, 'Iteration 1', 'Name', 'Solving problem','CreateCancelBtn','delete(gcbf)');
+        % prompt = 'do you want to specify coordinates, estimate as the center of the image, manually set values, or draw? \n (reply spec, est, manu, or draw): ';
+        % boolcord = input(prompt,'s');
+        % if isequal(boolcord,'est')
+        %     [row,col] = size(basis_tiff_stack_crop);
+        %     center = [col/2,row/2];
+        %     radii = row/2;
+        %     %basisindex(1) = 1;
+        % elseif isequal(boolcord,'spec')
+        %     prompt = 'The image dimensions are 836x720. enter the pixel coordinates as [x,y] with the brackets: ';
+        %     center = input(prompt);
+        %     prompt = 'enter the radius as a pixel number: ';
+        %     radii = input(prompt);
+        %     metric = 1;
+        % elseif isequal(boolcord,'manu')
+        %     close all
+        %     %hWaitbar = waitbar(0, 'Iteration 1', 'Name', 'Solving problem','CreateCancelBtn','delete(gcbf)');
+        % 
+        %     circ = viscircles(center, radii,'Color','b');
+        % 
+        %     xdata = circ.Children.XData;
+        %     ydata = circ.Children.YData;
+        % 
+        % 
+        %     hFig = figure;
+        % 
+        % 
+        %     %basisImage = imadjust(im2gray(imread(imagefiles(end).name))); [imagefiles(i).folder imagefiles(i).name]
+        %     basisImage = imadjust(im2gray(imread([imagefiles(end).folder '\' imagefiles(end).name])));
+        %     crop = basisImage;
+        %     imshow(crop);
+        % 
+        %     xdata = circ.Children.XData;
+        %     ydata = circ.Children.YData;
+        %     hold on
+        %     % txt = text(1,20,'0');
+        %     plot(xdata,ydata,'LineWidth',4,'Color','r');
+        %     disp('Use arrow keys to move the circle, w increases radius, s decreases radius');
+        %     disp('You must have the figure with the red circle open to adjust the circle')
+        %     set(hFig,'KeyPressFcn',{@KeyPressCb,1,xdata,ydata,center,radii});
+        %     % txt = text(1,20,'0');
+        %     hWaitbar = waitbar(0, 'Hit Cancel When Your Circle Is Good', 'Name', 'Hit Cancel When The Circle Is Good','CreateCancelBtn','delete(gcbf)');
+        %     while true
+        % 
+        % 
+        % 
+        %         if ~ishandle(hWaitbar)
+        %             % Stop the if cancel button was pressed
+        %             disp('Stopped by user');
+        %             break;
+        %         else
+        %             % Update the wait bar
+        %             waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
+        %             % area = polyarea(xdata,ydata);
+        % 
+        %             % set(txt,'String',['Pixel Area: ' num2str(area)]);
+        %         end
+        % 
+        % 
+        %         drawnow
+        % 
+        % 
+        % 
+        % 
+        % 
+        %     end
+        %     hold off
+        %     obj = hFig.Children.Children;
+        %     x = obj(1).XData;
+        %     y = obj(1).YData;
+        %     radii = (x(1) - min(x))/2;
+        %     x_cen = min(x) + radii;
+        %     y_cen = min(y) + radii;
+        %     center = [x_cen,y_cen];
+        %     close all
+        % else
+        prompt = 'What shape do you want to draw? \n (reply rect, poly, free, assist, line, circ): ';
+        booldraw = input(prompt,'s');
+        if isequal(booldraw,'free')
 
-            circ = viscircles(center, radii,'Color','b');
-            
-            xdata = circ.Children.XData;
-            ydata = circ.Children.YData;
-            
-            
             hFig = figure;
             
 
             %basisImage = imadjust(im2gray(imread(imagefiles(end).name))); [imagefiles(i).folder imagefiles(i).name]
-            basisImage = imadjust(im2gray(imread([imagefiles(end).folder '\' imagefiles(end).name])));
+            basisImage = imadjust(im2gray(imread( [imagefiles(end).folder '\' imagefiles(end).name])));
             crop = basisImage;
             imshow(crop);
-            
-            xdata = circ.Children.XData;
-            ydata = circ.Children.YData;
-            hold on
-            % txt = text(1,20,'0');
-            plot(xdata,ydata,'LineWidth',4,'Color','r');
-            disp('Use arrow keys to move the circle, w increases radius, s decreases radius');
-            disp('You must have the figure with the red circle open to adjust the circle')
-            set(hFig,'KeyPressFcn',{@KeyPressCb,1,xdata,ydata,center,radii});
-            % txt = text(1,20,'0');
-            hWaitbar = waitbar(0, 'Hit Cancel When Your Circle Is Good', 'Name', 'Hit Cancel When The Circle Is Good','CreateCancelBtn','delete(gcbf)');
+            shape = drawfreehand();
+            txt = text(1,20,'0');
+            hWaitbar = waitbar(0, 'Hit Cancel When Your Drawing Is Good', 'Name', 'Hit Cancel When The Drawing Is Good','CreateCancelBtn','delete(gcbf)');
             while true
                 
 
@@ -172,9 +213,10 @@ if isequal(boolbasis,'yes')
                 else
                     % Update the wait bar
                     waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
-                    % area = polyarea(xdata,ydata);
+                    area = polyarea(shape.Position(:,1),shape.Position(:,2));
 
-                    % set(txt,'String',['Pixel Area: ' num2str(area)]);
+                    set(txt,'String',['Pixel Area: ' num2str(area)]);
+                    
                 end
                 
                 
@@ -185,284 +227,235 @@ if isequal(boolbasis,'yes')
 
 
             end
-            hold off
-            obj = hFig.Children.Children;
-            x = obj(1).XData;
-            y = obj(1).YData;
-            radii = (x(1) - min(x))/2;
-            x_cen = min(x) + radii;
-            y_cen = min(y) + radii;
-            center = [x_cen,y_cen];
-            close all
-        else
-            prompt = 'What shape do you want to draw? \n (reply rect, poly, free, assist, line, circ): ';
-            booldraw = input(prompt,'s');
-            if isequal(booldraw,'free')
 
-                hFig = figure;
-                
-    
-                %basisImage = imadjust(im2gray(imread(imagefiles(end).name))); [imagefiles(i).folder imagefiles(i).name]
-                basisImage = imadjust(im2gray(imread( [imagefiles(end).folder '\' imagefiles(end).name])));
-                crop = basisImage;
-                imshow(crop);
-                shape = drawfreehand();
-                txt = text(1,20,'0');
-                hWaitbar = waitbar(0, 'Hit Cancel When Your Drawing Is Good', 'Name', 'Hit Cancel When The Drawing Is Good','CreateCancelBtn','delete(gcbf)');
-                while true
-                    
-    
-                    
-                    if ~ishandle(hWaitbar)
-                        % Stop the if cancel button was pressed
-                        disp('Stopped by user');
-                        break;
-                    else
-                        % Update the wait bar
-                        waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
-                        area = polyarea(shape.Position(:,1),shape.Position(:,2));
 
-                        set(txt,'String',['Pixel Area: ' num2str(area)]);
-                        
-                    end
-                    
-                    
-                    drawnow
+
+            mask = createMask(shape);
+            pos = shape.Position;
+            pos = interppolygon(pos,360,'linear');
+            pos_o = pos;
+            draw = true;
+        elseif isequal(booldraw,'rect')
+            hFig = figure;
+            
+
+            basisImage = imadjust(im2gray(imread( [imagefiles(end).folder '\' imagefiles(end).name])));
+            crop = basisImage;
+            imshow(crop);
+            shape = drawrectangle();
+            txt = text(1,20,'0');
+            hWaitbar = waitbar(0, 'Hit Cancel When Your Rectangle Is Good', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
+            while true
                 
-    
-               
-    
-    
+
+                
+                if ~ishandle(hWaitbar)
+                    % Stop the if cancel button was pressed
+                    disp('Stopped by user');
+                    break;
+                else
+                    % Update the wait bar
+                    waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
+                    area = shape.Position(3)*shape.Position(4);
+
+                    set(txt,'String',['Pixel Area: ' num2str(area)]);
+                    
                 end
-
-
-
-                mask = createMask(shape);
-                pos = shape.Position;
-                pos = interppolygon(pos,360,'linear');
-                pos_o = pos;
-                draw = true;
-            elseif isequal(booldraw,'rect')
-                hFig = figure;
                 
-    
-                basisImage = imadjust(im2gray(imread( [imagefiles(end).folder '\' imagefiles(end).name])));
-                crop = basisImage;
-                imshow(crop);
-                shape = drawrectangle();
-                txt = text(1,20,'0');
-                hWaitbar = waitbar(0, 'Hit Cancel When Your Rectangle Is Good', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
-                while true
-                    
-    
-                    
-                    if ~ishandle(hWaitbar)
-                        % Stop the if cancel button was pressed
-                        disp('Stopped by user');
-                        break;
-                    else
-                        % Update the wait bar
-                        waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
-                        area = shape.Position(3)*shape.Position(4);
-
-                        set(txt,'String',['Pixel Area: ' num2str(area)]);
-                        
-                    end
-                    
-                    
-                    drawnow
                 
-    
-               
-    
-    
-                end
-                mask = createMask(shape);
-                pos = shape.Position;
-                x_corn = pos(1);
-                y_corn = pos(2);
-                wid = pos(3);
-                hei = pos(4);
-                x_cen = x_corn + wid/2;
-                y_cen = y_corn + hei/2;
-                center = [x_cen,y_cen];
-                radii = sqrt((x_cen-x_corn)^2+(y_cen-y_corn)^2);
-                pos = [x_corn,y_corn;x_corn+wid,y_corn;x_corn+wid,y_corn+hei;x_corn,y_corn+hei;x_corn,y_corn];
-                pos = interppolygon(pos,360,'linear');
-                pos_o = pos;
-                
+                drawnow
+            
 
-                draw = false;
-                rect = true;
-                
-            elseif isequal(booldraw,'poly')
-                hFig = figure;
-                
-    
-                basisImage = imadjust(im2gray(imread( [imagefiles(end).folder '\' imagefiles(end).name])));
-                crop = basisImage;
-                imshow(crop);
-                shape = drawpolygon();
-                txt = text(1,20,'0');
-                hWaitbar = waitbar(0, 'Hit Cancel When Your Drawing Is Good', 'Name', 'Hit Cancel When The Drawing Is Good','CreateCancelBtn','delete(gcbf)');
-                while true
-                    
-    
-                    
-                    if ~ishandle(hWaitbar)
-                        % Stop the if cancel button was pressed
-                        disp('Stopped by user');
-                        break;
-                    else
-                        % Update the wait bar
-                        waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
-                        area = polyarea(shape.Position(:,1),shape.Position(:,2));
-
-                        set(txt,'String',['Pixel Area: ' num2str(area)]);
-                        
-                    end
-                    
-                    
-                    drawnow
-                
-    
-               
-    
-    
-                end
-
-
-
-                mask = createMask(shape);
-                pos = shape.Position;
-                % [~,indx,ic] = unique(pos(:,1));
-                pos = interppolygon(pos,360,'linear');
-                pos_o = pos;
-                draw = true;
-            elseif isequal(booldraw,'assist')
-                hFig = figure;
-                
-    
-                basisImage = imadjust(im2gray(imread( [imagefiles(end).folder '\' imagefiles(end).name])));
-                crop = basisImage;
-                imshow(crop);
-                shape = drawassisted();
-                txt = text(1,20,'0');
-                hWaitbar = waitbar(0, 'Hit Cancel When Your Drawing Is Good', 'Name', 'Hit Cancel When The Drawing Is Good','CreateCancelBtn','delete(gcbf)');
-                while true
-                    
-    
-                    
-                    if ~ishandle(hWaitbar)
-                        % Stop the if cancel button was pressed
-                        disp('Stopped by user');
-                        break;
-                    else
-                        % Update the wait bar
-                        waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
-                        area = polyarea(shape.Position(:,1),shape.Position(:,2));
-
-                        set(txt,'String',['Pixel Area: ' num2str(area)]);
-                        
-                    end
-                    
-                    
-                    drawnow
-                
-    
-               
-    
-    
-                end
-                mask = createMask(shape);
-                pos = shape.Position;
-                % [posx,~,ic] = unique(pos(:,1));
-                % posx = posx(ic);
-                % [posy,~,ic] = unique(pos(:,2));
-                % posy = posy(ic);
-                % pos = [posx,posy];
-                pos = interppolygon(pos,360,'spline');
-                pos_o = pos;
-                draw = true;
-            elseif isequal(booldraw,'line')
-                hFig = figure;
-                
-    
-                basisImage = imadjust(im2gray(imread( [imagefiles(end).folder '\' imagefiles(end).name])));
-                crop = basisImage;
-                imshow(crop);
-                shape = drawline();
-                mask = createMask(shape);
-                pos = shape.Position;
-                pos = interppolygon(pos,360,'linear');
-                pos_o = pos;
-                draw = true;
-            % elseif isequal(booldraw,'pline')
-            %     hFig = figure;
-            % 
-            % 
-            %     basisImage = imadjust(im2gray(imread(imagefiles(end).name)));
-            %     crop = basisImage;
-            %     imshow(crop);
-            %     shape = drawpolyline();
-            %     mask = createMask(shape);
-            %     pos = shape.Position;
-            %     pos = interppolygon(pos,360,'linear');
-            %     draw = true;
-
-            elseif isequal(booldraw,'circ')
-                hFig = figure;
-                
-    
-                basisImage = imadjust(im2gray(imread( [imagefiles(end).folder '\' imagefiles(end).name])));
-                crop = basisImage;
-                imshow(crop);
-                shape = drawcircle();
-                txt = text(1,20,'0');
-                hWaitbar = waitbar(0, 'Hit Cancel When Your Drawing Is Good', 'Name', 'Hit Cancel When The Drawing Is Good','CreateCancelBtn','delete(gcbf)');
-                while true
-                    
-    
-                    
-                    if ~ishandle(hWaitbar)
-                        % Stop the if cancel button was pressed
-                        disp('Stopped by user');
-                        break;
-                    else
-                        % Update the wait bar
-                        waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
-                        area = polyarea(shape.Vertices(:,1),shape.Vertices(:,2));
-
-                        set(txt,'String',['Pixel Area: ' num2str(area)]);
-                        
-                    end
-                    
-                    
-                    drawnow
-                
-    
-               
-    
-    
-                end
-
-
-
-                mask = createMask(shape);
-                pos = shape.Vertices;
-                pos = interppolygon(pos,360,'linear');
-                pos_o = pos;
-                draw = true;
-
-
-
-
-            end
            
 
 
+            end
+            mask = createMask(shape);
+            pos = shape.Position;
+            x_corn = pos(1);
+            y_corn = pos(2);
+            wid = pos(3);
+            hei = pos(4);
+            x_cen = x_corn + wid/2;
+            y_cen = y_corn + hei/2;
+            center = [x_cen,y_cen];
+            radii = sqrt((x_cen-x_corn)^2+(y_cen-y_corn)^2);
+            pos = [x_corn,y_corn;x_corn+wid,y_corn;x_corn+wid,y_corn+hei;x_corn,y_corn+hei;x_corn,y_corn];
+            pos = interppolygon(pos,360,'linear');
+            pos_o = pos;
+            
+
+            draw = false;
+            rect = true;
+            
+        elseif isequal(booldraw,'poly')
+            hFig = figure;
+            
+
+            basisImage = imadjust(im2gray(imread( [imagefiles(end).folder '\' imagefiles(end).name])));
+            crop = basisImage;
+            imshow(crop);
+            shape = drawpolygon();
+            txt = text(1,20,'0');
+            hWaitbar = waitbar(0, 'Hit Cancel When Your Drawing Is Good', 'Name', 'Hit Cancel When The Drawing Is Good','CreateCancelBtn','delete(gcbf)');
+            while true
+                
+
+                
+                if ~ishandle(hWaitbar)
+                    % Stop the if cancel button was pressed
+                    disp('Stopped by user');
+                    break;
+                else
+                    % Update the wait bar
+                    waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
+                    area = polyarea(shape.Position(:,1),shape.Position(:,2));
+
+                    set(txt,'String',['Pixel Area: ' num2str(area)]);
+                    
+                end
+                
+                
+                drawnow
+            
+
+           
+
+
+            end
+
+
+
+            mask = createMask(shape);
+            pos = shape.Position;
+            % [~,indx,ic] = unique(pos(:,1));
+            pos = interppolygon(pos,360,'linear');
+            pos_o = pos;
+            draw = true;
+        elseif isequal(booldraw,'assist')
+            hFig = figure;
+            
+
+            basisImage = imadjust(im2gray(imread( [imagefiles(end).folder '\' imagefiles(end).name])));
+            crop = basisImage;
+            imshow(crop);
+            shape = drawassisted();
+            txt = text(1,20,'0');
+            hWaitbar = waitbar(0, 'Hit Cancel When Your Drawing Is Good', 'Name', 'Hit Cancel When The Drawing Is Good','CreateCancelBtn','delete(gcbf)');
+            while true
+                
+
+                
+                if ~ishandle(hWaitbar)
+                    % Stop the if cancel button was pressed
+                    disp('Stopped by user');
+                    break;
+                else
+                    % Update the wait bar
+                    waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
+                    area = polyarea(shape.Position(:,1),shape.Position(:,2));
+
+                    set(txt,'String',['Pixel Area: ' num2str(area)]);
+                    
+                end
+                
+                
+                drawnow
+            
+
+           
+
+
+            end
+            mask = createMask(shape);
+            pos = shape.Position;
+            % [posx,~,ic] = unique(pos(:,1));
+            % posx = posx(ic);
+            % [posy,~,ic] = unique(pos(:,2));
+            % posy = posy(ic);
+            % pos = [posx,posy];
+            pos = interppolygon(pos,360,'spline');
+            pos_o = pos;
+            draw = true;
+        elseif isequal(booldraw,'line')
+            hFig = figure;
+            
+
+            basisImage = imadjust(im2gray(imread( [imagefiles(end).folder '\' imagefiles(end).name])));
+            crop = basisImage;
+            imshow(crop);
+            shape = drawline();
+            mask = createMask(shape);
+            pos = shape.Position;
+            pos = interppolygon(pos,360,'linear');
+            pos_o = pos;
+            draw = true;
+        % elseif isequal(booldraw,'pline')
+        %     hFig = figure;
+        % 
+        % 
+        %     basisImage = imadjust(im2gray(imread(imagefiles(end).name)));
+        %     crop = basisImage;
+        %     imshow(crop);
+        %     shape = drawpolyline();
+        %     mask = createMask(shape);
+        %     pos = shape.Position;
+        %     pos = interppolygon(pos,360,'linear');
+        %     draw = true;
+
+        elseif isequal(booldraw,'circ')
+            hFig = figure;
+            
+
+            basisImage = imadjust(im2gray(imread( [imagefiles(end).folder '\' imagefiles(end).name])));
+            crop = basisImage;
+            imshow(crop);
+            shape = drawcircle();
+            txt = text(1,20,'0');
+            hWaitbar = waitbar(0, 'Hit Cancel When Your Drawing Is Good', 'Name', 'Hit Cancel When The Drawing Is Good','CreateCancelBtn','delete(gcbf)');
+            while true
+                
+
+                
+                if ~ishandle(hWaitbar)
+                    % Stop the if cancel button was pressed
+                    disp('Stopped by user');
+                    break;
+                else
+                    % Update the wait bar
+                    waitbar(i/5,hWaitbar, ['Iteration ' num2str(i)]);
+                    area = polyarea(shape.Vertices(:,1),shape.Vertices(:,2));
+
+                    set(txt,'String',['Pixel Area: ' num2str(area)]);
+                    
+                end
+                
+                
+                drawnow
+            
+
+           
+
+
+            end
+
+
+
+            mask = createMask(shape);
+            pos = shape.Vertices;
+            pos = interppolygon(pos,360,'linear');
+            pos_o = pos;
+            draw = true;
+
+
+
+
         end
+       
+
+
     end
+
 
 else
 
@@ -2279,11 +2272,14 @@ elseif isequal(boolcorner,'r')
     scatter(midpoints(:,1),midpoints(:,2),'r','filled');
     scatter(center(:,1),center(:,2),'b','filled');
     scatter(strongCorners(:,1),strongCorners(:,2),'g+');
-    line([origin(1) center(1)],[origin(2) center(2)]);
-    line([origin(1) midpoints(1,1)],[origin(2) midpoints(1,2)]);
-    line([origin(1) midpoints(2,1)],[origin(2) midpoints(2,2)]);
-    line([origin(1) midpoints(3,1)],[origin(2) midpoints(3,2)]);
-    line([origin(1) midpoints(4,1)],[origin(2) midpoints(4,2)]);
+    if exist('origin','var')
+
+        line([origin(1) center(1)],[origin(2) center(2)]);
+        line([origin(1) midpoints(1,1)],[origin(2) midpoints(1,2)]);
+        line([origin(1) midpoints(2,1)],[origin(2) midpoints(2,2)]);
+        line([origin(1) midpoints(3,1)],[origin(2) midpoints(3,2)]);
+        line([origin(1) midpoints(4,1)],[origin(2) midpoints(4,2)]);
+    end
 
     c = uint8(cat(3,nMidMags,nCornerMags,nCenterMags));
     % 
@@ -2580,7 +2576,12 @@ else
 
 end
 
-linevalues_cumulative_c = linevalues_cumulative;
+if exist('linevalues_cumulative','var')
+
+    linevalues_cumulative_c = linevalues_cumulative;
+else
+    linevalues_cumulative_c = zeros(1,3);
+end
 
 prompt = input('Did you do lineplot analysis?: (y/n): ','s');
 if isequal(prompt,'y')
@@ -3065,6 +3066,11 @@ toc
 tic 
 
 timevec = linspace(0,1,num_images);
+if exist('section_num','var')
+
+else
+    section_num = 3;
+end
 
 if linebool
     fig1 = figure;
@@ -3107,7 +3113,7 @@ figx.Color = 'w';
 prompt = 'What output file name do you want? (type none if you dont want an output file): ';
 filename_output = input(prompt,'s');
 
-if isequal(filename_output,'none')
+if isequal(filename_output,'none') || isequal(filename_output,'')
       
 else
     %filename_output = input(prompt,'s');
@@ -3218,7 +3224,7 @@ end
 prompt = 'What position file name do you want? (type none if you dont want an output file): ';
 filename_output = input(prompt,'s');
 
-if isequal(filename_output,'none')
+if isequal(filename_output,'none') || isequal(filename_output,'')
       
 else
     % filename_output = input(prompt,'s');
@@ -3323,9 +3329,10 @@ end
 
 prompt = 'Do you want gifs of the ROI matrix? (yes or no): ';
 boolgif = input(prompt,'s');
-[lcrow,lccol,~] = size(linevalues_cumulative);
+% [lcrow,lccol,~] = size(linevalues_cumulative);
 
 if isequal(boolgif,'yes')
+    [lcrow,lccol,~] = size(linevalues_cumulative);
     imagedata = ones(lcrow,lccol,num_images);
     for i = 1:num_images
         imagedata(:,:,i) = uint8(linevalues_cumulative(:,:,i));
