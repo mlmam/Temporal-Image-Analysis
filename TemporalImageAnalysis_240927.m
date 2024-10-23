@@ -25,10 +25,10 @@ radius_mm = 3;
 
 countt = 1;
 
-prompt = 'Do you need a basis image & ROI? (yes or no): ';
+prompt = 'Do you need a basis image & ROI? (y/n): ';
 boolbasis = input(prompt,'s');
 i = 1;
-if isequal(boolbasis,'yes')
+if isequal(lower(boolbasis),'y') || isequal(lower(boolbasis),'yes')
     draw = false;
     cir = false;
     rect = false;
@@ -36,7 +36,7 @@ if isequal(boolbasis,'yes')
     drawrect = false;
     prompt = 'do you want to do automatic circle detection? (yes or no): ';
     boolbase = input(prompt,'s');
-    if isequal(boolbase, 'yes')
+    if isequal(lower(boolbase), 'yes') || isequal(lower(boolbase),'y')
         centers = zeros(basismax-1,2);
         radiis = zeros(basismax-1,1);
         basisindex = zeros(basismax-1,1);
@@ -110,9 +110,9 @@ if isequal(boolbasis,'yes')
     imshow(crop);
     viscircles(center, radii,'Color','b');
     
-    prompt = 'does this circle look adequate? (yes or no): ';
+    prompt = 'does this circle look adequate? (y/n): ';
     verify = input(prompt,'s');
-    if isequal(verify,'no')
+    if isequal(lower(verify),'no') || isequal(lower(verify),'n')
         % prompt = 'do you want to specify coordinates, estimate as the center of the image, manually set values, or draw? \n (reply spec, est, manu, or draw): ';
         % boolcord = input(prompt,'s');
         % if isequal(boolcord,'est')
@@ -190,7 +190,7 @@ if isequal(boolbasis,'yes')
         % else
         prompt = 'What shape do you want to draw? \n (reply rect, poly, free, assist, line, circ): ';
         booldraw = input(prompt,'s');
-        if isequal(booldraw,'free')
+        if isequal(lower(booldraw),'free') 
 
             hFig = figure;
             
@@ -481,7 +481,11 @@ if rect
     if any(nanmask)
         pos(nanmask) = pos(1,:);
     end
-    center = [mean(pos(:,1)),mean(pos(:,2))];
+    if exist('center','var')
+
+    else
+        center = [mean(pos(:,1)),mean(pos(:,2))];
+    end
 
     
     %mask = createMask(r);
@@ -502,7 +506,11 @@ elseif draw
     end
     x_cen = mean(pos(:,1));
     y_cen = mean(pos(:,2));
-    center = [x_cen,y_cen];
+    if exist("center",'var')
+
+    else
+        center = [x_cen,y_cen];
+    end
     radii = 1;
     alphamat = imguidedfilter(single(mask),basis_tiff_stack_crop,'DegreeOfSmoothing',2);
     imshow(uint8(single(basis_tiff_stack_crop).*alphamat))
@@ -538,11 +546,11 @@ toc
 % imagefiles = dir('*.png');
 % num_images = length(imagefiles);
 
-prompt = 'Do you want to make an new ROI centerline?: \nSay no to reuse centerline/skeleton \n(yes or no) ';
+prompt = 'Do you want to make an new ROI centerline?: \nSay no to reuse centerline/skeleton \n(y/n) ';
 skelbool = input(prompt,'s');
 
 
-if isequal(skelbool,'yes')
+if isequal(lower(skelbool),'yes') || isequal(lower(skelbool),'y')
 
     prompt = 'Auto or manual skeleton?: (auto or man) ';
     bwbool = input(prompt,'s');
@@ -574,17 +582,17 @@ if isequal(skelbool,'yes')
         imshow(centerToEdge(zoomBounds(1,1):zoomBounds(2,1),zoomBounds(1,2):zoomBounds(2,2)), []);
         title('Distance From Edge', 'FontSize', fontSize);
 
-        prompt = 'Do you want to remove skeleton points?: (yes or no) ';
+        prompt = 'Do you want to remove skeleton points?: (y/n) ';
         skelbool = input(prompt,'s');
         skeletonbool = true;
         looper = false;
         
-        if isequal(skelbool,'yes')
+        if isequal(lower(skelbool),'yes') || isequal(lower(skelbool),'y')
             looper = true;
         end
         while looper
         
-            if isequal(skelbool,'yes')
+            if isequal(skelbool,'yes') || isequal(lower(skelbool),'y')
                 
     
                 hFig = figure;
@@ -638,9 +646,9 @@ if isequal(skelbool,'yes')
                 title('Distance From Edge', 'FontSize', fontSize);
 
             end
-            prompt = 'Do you want to remove more skeleton points?: (yes or no) ';
+            prompt = 'Do you want to remove more skeleton points?: (y/n) ';
             removebool = input(prompt,'s');
-            if isequal(removebool,'yes')
+            if isequal(lower(removebool),'yes') || isequal(lower(removebool),'y')
                 
             else
                 looper = false;
@@ -699,16 +707,16 @@ if isequal(skelbool,'yes')
 
 
 
-        prompt = 'Do you want to remove skeleton points?: (yes or no) ';
+        prompt = 'Do you want to remove skeleton points?: (y/n) ';
         skelbool = input(prompt,'s');
         skeletonbool = true;
         
-        if isequal(skelbool,'yes')
+        if isequal(lower(skelbool),'yes') || isequal(lower(skelbool),'y')
             looper = true;
         end
         while looper
         
-            if isequal(skelbool,'yes')
+            if isequal(lower(skelbool),'yes') || isequal(lower(skelbool),'y')
                 
     
                 hFig = figure;
@@ -762,9 +770,9 @@ if isequal(skelbool,'yes')
                 title('Distance From Edge', 'FontSize', fontSize);
 
             end
-            prompt = 'Do you want to remove more skeleton points?: (yes or no) ';
+            prompt = 'Do you want to remove more skeleton points?: (y/n) ';
             removebool = input(prompt,'s');
-            if isequal(removebool,'yes')
+            if isequal(lower(removebool),'yes') || isequal(lower(removebool),'y')
                 
             else
                 looper = false;
@@ -779,11 +787,11 @@ else
 
 end
 
-prompt = 'Do you want to use the skeleton in the active workspace for line analysis?: (yes or no) ';
+prompt = 'Do you want to use the skeleton in the active workspace for line analysis?: (y/n) ';
 skelbool = input(prompt,'s');
 
 
-if isequal(skelbool,'yes')
+if isequal(lower(skelbool),'yes') || isequal(lower(skelbool),'y')
     % close
     skelfig = figure;
     subplot(2, 2, 1);
@@ -897,8 +905,8 @@ if isequal(skelbool,'yes')
     scatter(pos(:,1),pos(:,2));
 
 
-    prompt = input('Do you want to remove any polygon points from analysis?: (yes/no)','s');
-    if isequal(prompt,'yes')
+    prompt = input('Do you want to remove any polygon points from analysis?: (y/n)','s');
+    if isequal(lower(prompt),'yes') || isequal(lower(prompt),'y')
         button = 1;
         looper = true;
         hWaitbar = waitbar(0, 'Hit Cancel When Done', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
@@ -1033,18 +1041,22 @@ if isequal(skelbool,'yes')
     scatter(pos(:,1),pos(:,2));
 else
     skeletonbool = false;
-    center = [mean(pos(:,1)),mean(pos(:,2))];
+    if exist('center','var')
+
+    else
+        center = [mean(pos(:,1)),mean(pos(:,2))];
+    end
 
 end
 
 
 
 
-prompt = 'Do you want to threshold your data?: (auto, yes, or no) ';
+prompt = 'Do you want to threshold your data?: (auto, y, or n) ';
 thrbool = input(prompt,'s');
 
 threshbool = false;
-if isequal(thrbool,'yes')
+if isequal(lower(thrbool),'yes') || isequal(lower(thrbool),'y')
     prompt = 'Do you want to keep bright or dark objects?: (b or d)';
     objbool = input(prompt,'s');
     if isequal(objbool,'b')
@@ -1230,8 +1242,8 @@ if isequal(boolcorner,'d')
     end
     hold off
 
-    prompt = input('Do you want to add or remove any corner points?: (yes/no)','s');
-    if isequal(prompt,'yes')
+    prompt = input('Do you want to add or remove any corner points?: (y/n)','s');
+    if isequal(lower(prompt),'yes') || isequal(lower(prompt),'y')
         button = 1;
         hWaitbar = waitbar(0, 'Hit Cancel When Done', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
         while true
@@ -1336,8 +1348,8 @@ if isequal(boolcorner,'d')
 
     % center = [round(mean(midpoints(:,1))),round(mean(midpoints(:,2)))];
 
-    prompt = input('Do you want to add or remove any edge points?: (yes/no)','s');
-    if isequal(prompt,'yes')
+    prompt = input('Do you want to add or remove any edge points?: (y/n)','s');
+    if isequal(lower(prompt),'yes') || isequal(lower(prompt),'y')
         button = 1;
         hWaitbar = waitbar(0, 'Hit Cancel When Done', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
         while true
@@ -1517,9 +1529,9 @@ if isequal(boolcorner,'d')
     scatter(center(:,1),center(:,2),'b','filled');
 
 
-    prompt = input('Do you want to change any edge points to center points?: (yes/no)','s');
+    prompt = input('Do you want to change any edge points to center points?: (y/n)','s');
     disp('hit the mouse scroll wheel to end point selection');
-    if isequal(prompt,'yes')
+    if isequal(lower(prompt),'yes') || isequal(lower(prompt),'y')
         button = 1;
         hWaitbar = waitbar(0, 'Hit Cancel When Done', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
         while true
@@ -1555,8 +1567,8 @@ if isequal(boolcorner,'d')
 
     end
 
-    prompt = input('Do you want to change any corner points to edge points?: (yes/no)','s');
-    if isequal(prompt,'yes')
+    prompt = input('Do you want to change any corner points to edge points?: (y/n)','s');
+    if isequal(lower(prompt),'yes') || isequal(lower(prompt),'y')
         button = 1;
         hWaitbar = waitbar(0, 'Hit Cancel When Done', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
         while true
@@ -1592,8 +1604,8 @@ if isequal(boolcorner,'d')
 
     end
 
-    prompt = input('Do you want to add or remove any corner points?: (yes/no)','s');
-    if isequal(prompt,'yes')
+    prompt = input('Do you want to add or remove any corner points?: (y/n)','s');
+    if isequal(lower(prompt),'yes') || isequal(lower(prompt),'y')
         button = 1;
         hWaitbar = waitbar(0, 'Hit Cancel When Done', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
         while true
@@ -1656,8 +1668,8 @@ if isequal(boolcorner,'d')
 
     end
 
-    prompt = input('Do you want to add or remove any center points?: (yes/no)','s');
-    if isequal(prompt,'yes')
+    prompt = input('Do you want to add or remove any center points?: (y/n)','s');
+    if isequal(lower(prompt),'yes') || isequal(lower(prompt),'y')
         button = 1;
         hWaitbar = waitbar(0, 'Hit Cancel When Done', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
         while true
@@ -1709,8 +1721,8 @@ if isequal(boolcorner,'d')
 
     end
 
-    prompt = input('Do you want to add or remove any individual edge points?: (yes/no)','s');
-    if isequal(prompt,'yes')
+    prompt = input('Do you want to add or remove any individual edge points?: (y/n)','s');
+    if isequal(lower(prompt),'yes') || isequal(lower(prompt),'y')
         button = 1;
         hWaitbar = waitbar(0, 'Hit Cancel When Done', 'Name', 'Hit Cancel When The Rectangle Is Good','CreateCancelBtn','delete(gcbf)');
         while true
@@ -1769,7 +1781,7 @@ if isequal(boolcorner,'d')
     end
     prompt = input('Do you want to remove many edge points?: (y/n): ','s');
     looper = false;
-    if isequal(prompt,'y')
+    if isequal(lower(prompt),'yes') || isequal(lower(prompt),'y')
         looper = true;
     end
     while looper
@@ -1819,9 +1831,9 @@ if isequal(boolcorner,'d')
         scatter(midpoints(:,1),midpoints(:,2),'r','filled');
         scatter(center(:,1),center(:,2),'b','filled');
         % close
-        prompt = 'Do you want to remove more edge points?: (yes or no) ';
+        prompt = 'Do you want to remove more edge points?: (y/n) ';
         removebool = input(prompt,'s');
-        if isequal(removebool,'yes')
+        if isequal(lower(removebool),'yes') || isequal(lower(removebool),'y')
             
         else
             looper = false;
@@ -1861,9 +1873,10 @@ if isequal(boolcorner,'d')
     mapping = [0, 1.28/1000, 0, 0]; % mm/pixel
     objdist = dictionary(objectives,mapping);
     if isempty(center)
-        prompt = input('Do you want to add a center & edges outside the image?: ','s');
-        if isequal(prompt,'y')
-            prompt = input('What objective did you image with: ','s');
+        prompt = input('Do you want to add a center & edges outside the image? (y/n): ','s');
+        if isequal(lower(prompt),'yes') || isequal(lower(prompt),'y')
+            disp('Only the 4x objective has been calibrated for this program')
+            prompt = input('What objective did you image with: (1.25, 4, 10, 20): ','s');
             scale_f = objdist(prompt);
             len = input('What is the center to corner distance in the device (in mm)?: ','s');
             cornlen = input('What is the corner to corner distance in the device (in mm)?: ','s');
@@ -2397,15 +2410,15 @@ elseif isequal(boolcorner,'r')
 end
 
 
-prompt = 'Do you need to generate lineplot data for your images? (yes or no): ';
+prompt = 'Do you need to generate lineplot data for your images? (y/n): ';
 booldata = input(prompt,'s');
 tic
-if isequal(booldata,'yes')
+if isequal(lower(booldata),'yes') || isequal(lower(booldata),'y')
 
 
 
-linevalues_cumulative = zeros(max(num_points),num_lines,num_images);
-wellradius_guess = floor(dataOutput_immediate(1,3));
+    linevalues_cumulative = zeros(max(num_points),num_lines,num_images);
+    wellradius_guess = floor(dataOutput_immediate(1,3));
 
  
 
@@ -2549,9 +2562,9 @@ end
 
 %removes points that change from less than 5% of their starting value
 
-prompt = 'Do you want to set points that dont change by >5% to 0? ';
+prompt = 'Do you want to set points that dont change by >5% to 0? (y/n): ';
 bool5p = input(prompt,'s');
-if isequal(bool5p,'yes')
+if isequal(lower(bool5p),'yes') || isequal(lower(bool5p),'y')
     for q=1:num_lines
     
            single_lineplot = linevalues_cumulative(:,q,:);
@@ -2584,13 +2597,15 @@ else
 end
 
 prompt = input('Did you do lineplot analysis?: (y/n): ','s');
-if isequal(prompt,'y')
+if isequal(lower(prompt),'yes') || isequal(lower(prompt),'y')
     r_values = linspace(0,1,max(num_points))*radius_mm;
     linebool = true;
     prompt = 'How many radial sections? ';
     section_num = input(prompt);
     if isempty(section_num)
         section_num = 3;
+    else
+        section_num = str2num(section_num);
     end
     step = floor(num_points./section_num); 
     
@@ -2736,7 +2751,7 @@ warning('off','all')
 cutoffs = 0.05:0.05:0.95;
 
 prompt = input("Do you want to analyze the video by point classification?: (y/n): ",'s');
-if isequal(prompt,'y')
+if isequal(lower(prompt),'yes') || isequal(lower(prompt),'y')
     indmat = zeros(Xr,Xc,length(cutoffs));
     
     for i = 1:length(cutoffs)
@@ -3101,16 +3116,20 @@ end
 disp("Plotting time");
 toc
 
-figx = figure;
-imshow(uint8(linevalues_cumulative_c(:,:,1)))
-xlabel('Line Index (X)','FontSize',20);
-ylabel('Point Distance Magntidue','FontSize',20);
-title('Center Point','FontSize',20);
-figx.Color = 'w';
+if length(linevalues_cumulative_c) == 3
+
+else
+    figx = figure;
+    imshow(uint8(linevalues_cumulative_c(:,:,1)))
+    xlabel('Line Index (X)','FontSize',20);
+    ylabel('Point Distance Magntidue','FontSize',20);
+    title('Center Point','FontSize',20);
+    figx.Color = 'w';
+end
 
 
 
-prompt = 'What output file name do you want? (type none if you dont want an output file): ';
+prompt = 'What output file name do you want? (hit return if you dont want an output file): ';
 filename_output = input(prompt,'s');
 
 if isequal(filename_output,'none') || isequal(filename_output,'')
@@ -3221,7 +3240,7 @@ else
 end
 
 
-prompt = 'What position file name do you want? (type none if you dont want an output file): ';
+prompt = 'What position file name do you want? (hit return if you dont want an output file): ';
 filename_output = input(prompt,'s');
 
 if isequal(filename_output,'none') || isequal(filename_output,'')
@@ -3237,6 +3256,12 @@ else
     names = {'ROI x Position', 'ROI y Position'};
     names = string(names);
     roicenter = string({'ROI x Center','ROI y Center'});
+    if exist('strongCorners','var')
+        roiCorners = string({'ROI x Corner','ROI y Corner'});
+    end
+    if exist('midpoints','var')
+        roiEdges = string({'ROI x Edge','ROI y Edge'});
+    end
     wordformat = string('');
     numformat = string('');
 
@@ -3256,6 +3281,12 @@ else
     fprintf(fileID,numformat,pos);
     fprintf(fileID,wordformat,roicenter);
     fprintf(fileID,numformat,center);
+    if exist('roiCorners','var')
+        fprintf(fileID,wordformat,roiCorners);
+        fprintf(fileID,numformat,strongCorners);
+        fprintf(fileID,wordformat,roiEdges);
+        fprintf(fileID,numformat,midpoints);
+    end
     
     fclose(fileID);
 end
@@ -3264,11 +3295,11 @@ end
 % num_images = length(imagefiles);
 warning('off','all')
 
-prompt = 'Do you want gifs of the ROI image? (yes or no): ';
+prompt = 'Do you want gifs of the ROI image? (y/n): ';
 boolgif = input(prompt,'s');
 [irow,icol] = size(tiff_stack);
 
-if isequal(boolgif,'yes')
+if isequal(lower(boolgif),'yes') || isequal(lower(boolgif),'y')
     imagedata = ones(irow,icol,num_images);
     for i = 1:num_images
         tiff_stack2 = im2gray(imread([imagefiles(i).folder '\' imagefiles(i).name]));
@@ -3327,11 +3358,11 @@ else
 end
 
 
-prompt = 'Do you want gifs of the ROI matrix? (yes or no): ';
+prompt = 'Do you want gifs of the ROI matrix? (y/n): ';
 boolgif = input(prompt,'s');
 % [lcrow,lccol,~] = size(linevalues_cumulative);
 
-if isequal(boolgif,'yes')
+if isequal(lower(boolgif),'yes') || isequal(lower(boolgif),'y')
     [lcrow,lccol,~] = size(linevalues_cumulative);
     imagedata = ones(lcrow,lccol,num_images);
     for i = 1:num_images
