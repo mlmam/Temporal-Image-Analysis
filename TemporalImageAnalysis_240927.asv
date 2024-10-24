@@ -493,7 +493,7 @@ if rect
     % alphamat = imguidedfilter(basis_tiff_stack_crop,single(mask));
     imshow(uint8(single(basis_tiff_stack_crop).*alphamat))
     
-    dataOutput_immediate = [center radii];
+    %dataOutput_immediate = [center radii];
     %circrect = false;
     cir = false;
     draw = true;
@@ -514,7 +514,7 @@ elseif draw
     radii = 1;
     alphamat = imguidedfilter(single(mask),basis_tiff_stack_crop,'DegreeOfSmoothing',2);
     imshow(uint8(single(basis_tiff_stack_crop).*alphamat))
-    dataOutput_immediate = [center radii];
+    %dataOutput_immediate = [center radii];
 
 else
     %circ = viscircles(center, radii,'Color','b');
@@ -529,7 +529,7 @@ else
     pos = circ.Vertices;
     pos = interppolygon(pos,360,'linear');
 
-    dataOutput_immediate = [center radii metric];
+    %dataOutput_immediate = [center radii metric];
     alphamat = imguidedfilter(single(mask),basis_tiff_stack_crop,'DegreeOfSmoothing',2);
     imshow(uint8(single(basis_tiff_stack_crop).*alphamat))
     cir = true;
@@ -1946,12 +1946,30 @@ if isequal(boolcorner,'d')
             % [~,close_cen] = max(min(midMags,[],3)+min(cornerMags,[],3),[],'all');
             % closest_cen = [X(close_cen),Y(close_cen)];
             closest_cen = [mean(pos(:,1)),mean(pos(:,2))];
-            closest_corn1 = midpoints(1,:);
 
+            closest_corn1 = midpoints(1,:);
             closest_corn2 = midpoints(2,:);
             slope = (closest_cen(1,2)-strongCorners(1,2))/(closest_cen(1,1)-strongCorners(1,1));
             slopewall1 = (closest_corn1(1,2)-strongCorners(1,2))/(closest_corn1(1,1)-strongCorners(1,1));
             slopewall2 = (closest_corn2(1,2)-strongCorners(1,2))/(closest_corn2(1,1)-strongCorners(1,1));
+            
+
+            % wall1Yonly = false;
+            % wall1Xonly = false;
+            % wall2Xonly = false;
+            % wall2Yonly = false;
+            % if slopewall1 == 0
+            % 
+            % elseif abs(slopewall1) == Inf
+            %     slopewall1 = 0;
+            % end
+            % 
+            % if slopewall2 == 0
+            % 
+            % elseif abs(slopewall2) == Inf
+            %     slopewall2 = 0;
+            % end
+
             
             if closest_cen(1,1) < strongCorners(1,1)
                 xsign = -1;
@@ -1981,13 +1999,18 @@ if isequal(boolcorner,'d')
                 centernorm = norm([tempx,tempy]-origin);
             end
             center = [tempx,tempy];
-            line([origin(1) tempx],[origin(2) tempy]);
+            %line([origin(1) tempx],[origin(2) tempy]);
 
+            
             tempx = closest_corn1(1);
             tempy = closest_corn1(2);
             while cornnorm1 < corn_len
-                tempx = tempx + xsign;
-                tempy = (tempx-origin(1))*slopewall1+origin(2);
+                if abs(slopewall1) == Inf
+                    tempy = tempy + xsign;
+                else
+                    tempx = tempx + xsign;
+                    tempy = (tempx-origin(1))*slopewall1+origin(2);
+                end
                 cornnorm1 = norm([tempx,tempy]-origin);
             end
             midpoints = [midpoints;tempx,tempy];
@@ -1996,8 +2019,12 @@ if isequal(boolcorner,'d')
             tempx = closest_corn2(1);
             tempy = closest_corn2(2);
             while cornnorm2 < corn_len
-                tempx = tempx + xsign;
-                tempy = (tempx-origin(1))*slopewall2+origin(2);
+                if abs(slopewall2) == Inf
+                    tempy = tempy + xsign;
+                else
+                    tempx = tempx + xsign;
+                    tempy = (tempx-origin(1))*slopewall2+origin(2);
+                end
                 cornnorm2 = norm([tempx,tempy]-origin);
             end
             midpoints = [midpoints;tempx,tempy];
@@ -2009,8 +2036,12 @@ if isequal(boolcorner,'d')
             cornnorm1 = norm(closest_corn1-origin);
             cornnorm2 = norm(closest_corn2-origin);
             while cornnorm1 < corn_len
-                tempx = tempx - xsign;
-                tempy = (tempx-origin(1))*slopewall1+origin(2);
+                if abs(slopewall1) == Inf
+                    tempy = tempy - xsign;
+                else
+                    tempx = tempx - xsign;
+                    tempy = (tempx-origin(1))*slopewall1+origin(2);
+                end
                 cornnorm1 = norm([tempx,tempy]-origin);
             end
             midpoints = [midpoints;tempx,tempy];
@@ -2025,6 +2056,32 @@ if isequal(boolcorner,'d')
             end
             midpoints = [midpoints;tempx,tempy];
             line([origin(1) tempx],[origin(2) tempy]);
+            
+            
+            if rect
+                norms = zeros(1,length(midpoints(:,1)));
+                for i = 1:length(midpoints(:,1))
+                    norms(i) = norm(midpoints(i,:)-center);
+                end
+                [min2,min2ind] = mink(norms,2);
+    
+                if abs(origin(1) - midpoints(min2ind(1),1)) < abs(origin(1) - midpoints(min2ind(2),1))
+                    yval = midpoints(min2ind(1),2);
+                else
+                    yval = midpoints(min2ind(2),2);
+                end
+    
+                if abs(origin(2) - midpoints(min2ind(1),2)) < abs(origin(2) - midpoints(min2ind(2),2))
+                    xval = midpoints(min2ind(1),1);
+                else
+                    xval = midpoints(min2ind(2),1);
+                end
+    
+                center = [xval,yval];
+                line([origin(1) xval],[origin(2) yval]);
+                scatter(center(1),center(2),'b','filled');
+            end
+
         end
     end
 
@@ -2160,14 +2217,14 @@ if isequal(boolcorner,'d')
     % subplot(1,3,2);
     nexttile(3)
     
-    pimage = uint8(zeros(length(basisImage(:,1)),length(basisImage(1,:)),3));
-    for i = 1:Xr
-        pimage(yp(i),xp(i),:) = c(i,n,:);
-        
-
-        
-
-    end
+    % pimage = uint8(zeros(length(basisImage(:,1)),length(basisImage(1,:)),3));
+    % for i = 1:Xr
+    %     pimage(yp(i),xp(i),:) = c(i,n,:);
+    % 
+    % 
+    % 
+    % 
+    % end
     % xq = linspace(min(xp),max(xp),100);
     % yq = linspace(min(yp),max(yp),100);
     % [Xq,Yq] = meshgrid(xq,yq);
@@ -2319,14 +2376,14 @@ elseif isequal(boolcorner,'r')
     % subplot(1,3,2);
     nexttile(3)
     
-    pimage = uint8(zeros(length(basisImage(:,1)),length(basisImage(1,:)),3));
-    for i = 1:Xr
-        pimage(yp(i),xp(i),:) = c(i,n,:);
-        
-
-        
-
-    end
+    % pimage = uint8(zeros(length(basisImage(:,1)),length(basisImage(1,:)),3));
+    % for i = 1:Xr
+    %     pimage(yp(i),xp(i),:) = c(i,n,:);
+    % 
+    % 
+    % 
+    % 
+    % end
     % xq = linspace(min(xp),max(xp),100);
     % yq = linspace(min(yp),max(yp),100);
     % [Xq,Yq] = meshgrid(xq,yq);
@@ -2416,9 +2473,9 @@ tic
 if isequal(lower(booldata),'yes') || isequal(lower(booldata),'y')
 
 
-
+    
     linevalues_cumulative = zeros(max(num_points),num_lines,num_images);
-    wellradius_guess = floor(dataOutput_immediate(1,3));
+    %wellradius_guess = floor(dataOutput_immediate(1,3));
 
  
 
@@ -3256,7 +3313,12 @@ else
     names = {'ROI x Position', 'ROI y Position'};
     names = string(names);
     roicenter = string({'ROI x Center','ROI y Center'});
-    roiCorners = string({})
+    if exist('strongCorners','var')
+        roiCorners = string({'ROI x Corner','ROI y Corner'});
+    end
+    if exist('midpoints','var')
+        roiEdges = string({'ROI x Edge','ROI y Edge'});
+    end
     wordformat = string('');
     numformat = string('');
 
@@ -3276,6 +3338,12 @@ else
     fprintf(fileID,numformat,pos);
     fprintf(fileID,wordformat,roicenter);
     fprintf(fileID,numformat,center);
+    if exist('roiCorners','var')
+        fprintf(fileID,wordformat,roiCorners);
+        fprintf(fileID,numformat,strongCorners);
+        fprintf(fileID,wordformat,roiEdges);
+        fprintf(fileID,numformat,midpoints);
+    end
     
     fclose(fileID);
 end
