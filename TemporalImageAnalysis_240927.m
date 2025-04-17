@@ -8,9 +8,9 @@ tic
 %defines image directory
 %set file path to '' if you only want to select images in the folder this
 %code file is in
-filepath = 'C:\Users\mmani\University of Michigan Dropbox\Matthew Manion\Temporal-Image-Analysis';
+filepath = 'C:\Users\mmani\University of Michigan Dropbox\Matthew Manion\Temporal-Image-Analysis\D3_sub50_output';
 % filepath = '';yyesyesdd
-imagepath = [filepath  '\D*.png'];
+imagepath = [filepath '\D3*.png'];
 % imagepath = [filepath  '\ConcentricSquare.jpg'];
 imagefiles = dir(imagepath);
 num_images = length(imagefiles);
@@ -1083,6 +1083,7 @@ if isequal(lower(thrbool),'yes') || isequal(lower(thrbool),'y')
         imagmasked2 = uint8(single(imag2).*alphamat);
         imagmasked(imgmask) = imagmasked2(imgmask);
         mask_image_data(:,:,i) = imagmasked;
+        imshow(mask_image_data(:,:,1));
     
     end
     threshbool = true;
@@ -1117,6 +1118,7 @@ elseif isequal(thrbool,'auto')
         imagmasked2 = uint8(single(imag2).*alphamat);
         imagmasked(saumask) = imagmasked2(saumask);
         mask_image_data(:,:,i) = imagmasked;
+        imshow(mask_image_data(:,:,1));
     
     end
     threshbool = true;
@@ -1456,7 +1458,7 @@ if isequal(boolcorner,'d')
         
     else
         % polytest = polygrid(pos(:,1),pos(:,2),0.000224871879); %gives 100 total points
-        polytest = polygrid(pos(:,1),pos(:,2),0.001);
+        polytest = polygrid(pos(:,1),pos(:,2),0.005);
         xp = round(polytest(:,1));
         yp = round(polytest(:,2));
         polyind = inpolygon(xp,yp,pos(:,1),pos(:,2));
@@ -2516,7 +2518,8 @@ if isequal(lower(booldata),'yes') || isequal(lower(booldata),'y')
             end
             
             if radii ~= 0 && ~draw
-                linevalues_output = improfile(tiff_stack,[dataOutput_immediate(1,1) dataOutput_immediate(1,1)+(wellradius_guess*cosd(anglevalue))],[dataOutput_immediate(1,2) dataOutput_immediate(1,2)+(wellradius_guess*sind(anglevalue))],num_points);
+                dataOutput_immediate = [center(1),center(2),radii];
+                linevalues_output = improfile(tiff_stack,[dataOutput_immediate(1,1) dataOutput_immediate(1,1)+(radii*cosd(anglevalue))],[dataOutput_immediate(1,2) dataOutput_immediate(1,2)+(radii*sind(anglevalue))],num_points);
                 % line([dataOutput_immediate(1,1) dataOutput_immediate(1,1)+(wellradius_guess*cosd(anglevalue))],[dataOutput_immediate(1,2) dataOutput_immediate(1,2)+(wellradius_guess*sind(anglevalue))]);
 
                 % linemin = min(linevalues_output);
@@ -2674,7 +2677,7 @@ if isequal(lower(prompt),'yes') || isequal(lower(prompt),'y')
     if isempty(section_num)
         section_num = 3;
     else
-        section_num = str2num(section_num);
+        
     end
     step = floor(num_points./section_num); 
     
@@ -2806,13 +2809,6 @@ else
     linebool = false;
 end
 
-bCenterMags = nCenterMags/255;
-bCornerMags = nCornerMags/255;
-bMidMags = nMidMags/255;
-
-% CeComask = bCenterMags > bCornerMags;
-% CeMimask = bCenterMags > bMidMags;
-% CoMimask = bCornerMags > bMidMags;
 
 warning('off','all')
 
@@ -2820,7 +2816,16 @@ warning('off','all')
 cutoffs = 0.05:0.05:0.95;
 
 prompt = input("Do you want to analyze the video by point classification?: (y/n): ",'s');
+
+
 if isequal(lower(prompt),'yes') || isequal(lower(prompt),'y')
+    bCenterMags = nCenterMags/255;
+    bCornerMags = nCornerMags/255;
+    bMidMags = nMidMags/255;
+    
+    % CeComask = bCenterMags > bCornerMags;
+    % CeMimask = bCenterMags > bMidMags;
+    % CoMimask = bCornerMags > bMidMags;
     indmat = zeros(Xr,Xc,length(cutoffs));
     
     for i = 1:length(cutoffs)
@@ -2863,6 +2868,9 @@ if isequal(lower(prompt),'yes') || isequal(lower(prompt),'y')
     % 3 --> Center
     integrated_pixels = zeros(num_images,length(cutoffs),3);
     pixel_counts = zeros(1,length(cutoffs),3);
+    photomask_cens = zeros(yspan,xspan,length(cutoffs));
+    photomask_corns = zeros(yspan,xspan,length(cutoffs));
+    photomask_edges = zeros(yspan,xspan,length(cutoffs));
     % disp('A circle would have 1 edge cluster, a serpentine section would have 2')
     % prompt = input('How many edges are you expecting: ','s');
     kfig = figure;
@@ -2923,6 +2931,7 @@ if isequal(lower(prompt),'yes') || isequal(lower(prompt),'y')
         else
 
         end
+        photomask_corns(:,:,i) = photomaskcorn;
         % plot(Co(:,1),Co(:,2),'gx','MarkerSize',15);
     
         temp = double([X(logical(cenmask(:,:,i))),Y(logical(cenmask(:,:,i)))]);
@@ -2955,6 +2964,7 @@ if isequal(lower(prompt),'yes') || isequal(lower(prompt),'y')
         else
 
         end
+        photomask_cens(:,:,i) = photomaskcen;
     
         temp = double([X(logical(midmask(:,:,i))),Y(logical(midmask(:,:,i)))]);
         tempind = inpolygon(temp(:,1),temp(:,2),pos(:,1),pos(:,2));
@@ -3027,6 +3037,7 @@ if isequal(lower(prompt),'yes') || isequal(lower(prompt),'y')
             end
         else
         end
+        photomask_edges(:,:,i) = photomaskedge;
         % text(-10,-10,num2str(sum(photomaskedge,'all')));
         title(['Threshold = '  num2str(cutoffs(i))]);
         hold off
@@ -3035,7 +3046,7 @@ if isequal(lower(prompt),'yes') || isequal(lower(prompt),'y')
         pixel_counts(1,i,3) = sum(photomaskcen,'all');
     
     
-    
+
         for ii = 1:num_images
             currentImage = [imagefiles(ii).folder '\' imagefiles(ii).name];
             %tiff_stack1 = imread(currentImage, "tiff");
@@ -3048,6 +3059,66 @@ if isequal(lower(prompt),'yes') || isequal(lower(prompt),'y')
         end
     
     end
+
+    photomask_censBin = zeros(yspan,xspan,length(cutoffs));
+    photomask_cornsBin = zeros(yspan,xspan,length(cutoffs));
+    photomask_edgesBin = zeros(yspan,xspan,length(cutoffs));
+    integrated_pixelsBin = zeros(num_images,length(cutoffs),3);
+
+    kfig2 = figure;
+    tlcc2 = tiledlayout('flow');
+    tlcc2.Padding = 'compact';
+    tlcc2.TileSpacing = 'compact';
+    set(gcf, 'units','normalized','outerposition',[0 0 1 1]);
+
+    for i = 1:length(cutoffs)
+        nexttile
+        imshow(basisImage);
+        title(['Threshold = '  num2str(cutoffs(i))]);
+        hold on
+        if i == length(cutoffs)
+            photomask_censBin(:,:,i) = photomask_cens(:,:,i);
+            [bin_row,bin_col] = find(photomask_censBin(:,:,i));
+            plot(bin_col,bin_row,'b.')
+            photomask_cornsBin(:,:,i) = photomask_corns(:,:,i);
+            [bin_row,bin_col] = find(photomask_cornsBin(:,:,i));
+            plot(bin_col,bin_row,'g.')
+            photomask_edgesBin(:,:,i) = photomask_edges(:,:,i);
+            [bin_row,bin_col] = find(photomask_edgesBin(:,:,i));
+            plot(bin_col,bin_row,'r.')
+        else
+        
+            photomask_censBin(:,:,i) = photomask_cens(:,:,i) - photomask_cens(:,:,i+1);
+            [bin_row,bin_col] = find(photomask_censBin(:,:,i));
+            plot(bin_col,bin_row,'b.')
+            photomask_cornsBin(:,:,i) = photomask_corns(:,:,i) - photomask_corns(:,:,i+1);
+            [bin_row,bin_col] = find(photomask_cornsBin(:,:,i));
+            plot(bin_col,bin_row,'g.')
+            photomask_edgesBin(:,:,i) = photomask_edges(:,:,i) - photomask_edges(:,:,i+1);
+            [bin_row,bin_col] = find(photomask_edgesBin(:,:,i));
+            plot(bin_col,bin_row,'r.')
+
+        end
+        
+        
+
+
+    end
+    
+    for i = 1:length(cutoffs)
+        for ii = 1:num_images
+            currentImage = [imagefiles(ii).folder '\' imagefiles(ii).name];
+            %tiff_stack1 = imread(currentImage, "tiff");
+            %tiff_stack = imadjust(imread(currentImage, "tiff"));
+            tiff_stack = im2gray(imread(currentImage));
+            % tiff_stack = uint8(single(tiff_stack).*alphamat);
+            integrated_pixelsBin(ii,i,2) = mean(tiff_stack(logical(photomask_cornsBin(:,:,i))));
+            integrated_pixelsBin(ii,i,3) = mean(tiff_stack(logical(photomask_censBin(:,:,i))));
+            integrated_pixelsBin(ii,i,1) = mean(tiff_stack(logical(photomask_edgesBin(:,:,i))));
+        end
+
+    end
+
 
     Cornfig = figure;
     Cornfig.Color = 'w';
@@ -3090,10 +3161,53 @@ if isequal(lower(prompt),'yes') || isequal(lower(prompt),'y')
         % legend(num2str(cutoffs(i)));
     end
     legend(legendCell);
+
+
+    Cornfig2 = figure;
+    Cornfig2.Color = 'w';
+    tl3 = tiledlayout(1,3);
+    tl3.Padding = 'compact';
+    tl3.TileSpacing = 'compact';
+    set(gcf, 'units','normalized','outerposition',[0 0 1 1]);
+    nexttile
+    title('Corner Points')
+    ylabel('Fluorescent Intensity')
+    xlabel('Time')
+    hold on
+    for i=1:length(cutoffs)
+        plot(linspace(0,1,num_images),integrated_pixelsBin(:,i,2),'LineWidth',sqrt(i));
+        % legend(num2str(cutoffs(i)));
+    end
+    legendCell = cellstr(num2str(cutoffs', 'Threshold=%.2f'));
+    legend(legendCell);
+    
+    % Edgefig = figure;
+    nexttile
+    title('Edge Points')
+    ylabel('Fluorescent Intensity')
+    xlabel('Time')
+    hold on
+    for i=1:length(cutoffs)
+        plot(linspace(0,1,num_images),integrated_pixelsBin(:,i,1),'LineWidth',sqrt(i));
+        % legend(num2str(cutoffs(i)));
+    end
+    legend(legendCell);
+    
+    % Cenfig = figure;
+    nexttile
+    title('Center Points')
+    ylabel('Fluorescent Intensity')
+    xlabel('Time')
+    hold on
+    for i=1:length(cutoffs)
+        plot(linspace(0,1,num_images),integrated_pixelsBin(:,i,3),'LineWidth',sqrt(i));
+        % legend(num2str(cutoffs(i)));
+    end
+    legend(legendCell);
     
     warning('on','all')
 elseif exist('integrated_pixels','var')
-    if ~isempty(integrated_pixels)
+    if ~isempty(integrated_pixels) & sum(integrated_pixels)>0
         Cornfig = figure;
         Cornfig.Color = 'w';
         tl3 = tiledlayout(1,3);
@@ -3135,9 +3249,52 @@ elseif exist('integrated_pixels','var')
             % legend(num2str(cutoffs(i)));
         end
         legend(legendCell);
+
+
+        Cornfig2 = figure;
+        Cornfig2.Color = 'w';
+        tl3 = tiledlayout(1,3);
+        tl3.Padding = 'compact';
+        tl3.TileSpacing = 'compact';
+        set(gcf, 'units','normalized','outerposition',[0 0 1 1]);
+        nexttile
+        title('Corner Points')
+        ylabel('Fluorescent Intensity')
+        xlabel('Time')
+        hold on
+        for i=1:length(cutoffs)
+            plot(linspace(0,1,num_images),integrated_pixelsBin(:,i,2),'LineWidth',sqrt(i));
+            % legend(num2str(cutoffs(i)));
+        end
+        legendCell = cellstr(num2str(cutoffs', 'Threshold=%.2f'));
+        legend(legendCell);
+        
+        % Edgefig = figure;
+        nexttile
+        title('Edge Points')
+        ylabel('Fluorescent Intensity')
+        xlabel('Time')
+        hold on
+        for i=1:length(cutoffs)
+            plot(linspace(0,1,num_images),integrated_pixelsBin(:,i,1),'LineWidth',sqrt(i));
+            % legend(num2str(cutoffs(i)));
+        end
+        legend(legendCell);
+        
+        % Cenfig = figure;
+        nexttile
+        title('Center Points')
+        ylabel('Fluorescent Intensity')
+        xlabel('Time')
+        hold on
+        for i=1:length(cutoffs)
+            plot(linspace(0,1,num_images),integrated_pixelsBin(:,i,3),'LineWidth',sqrt(i));
+            % legend(num2str(cutoffs(i)));
+        end
+        legend(legendCell);
     end
 else
-    section_num = 3;
+    %section_num = 3;
     norm_binned_vals = binned_vals;
 end
 
@@ -3240,6 +3397,18 @@ else
 
     else
         line_std_vals = zeros(length(Legend),1);
+    end
+
+    if exist('integrated_pixels','var')
+
+    else
+        integrated_pixels = zeros(length(Legend),1,3);
+    end
+
+    if exist('pixel_counts','var')
+
+    else
+        pixel_counts = zeros(length(Legend),1,3);
     end
     
     names2 = string(legendCell);
