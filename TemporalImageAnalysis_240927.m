@@ -8,9 +8,9 @@ tic
 %defines image directory
 %set file path to '' if you only want to select images in the folder this
 %code file is in
-filepath = 'C:\Users\mmani\University of Michigan Dropbox\Matthew Manion\Temporal-Image-Analysis';
+filepath = 'C:\Users\mmani\University of Michigan Dropbox\Matthew Manion\Temporal-Image-Analysis\D3_sub50_output';
 % filepath = '';yyesyesdd
-imagepath = [filepath  '\D1to12*.jpg'];
+imagepath = [filepath '\D3*.png'];
 % imagepath = [filepath  '\ConcentricSquare.jpg'];
 imagefiles = dir(imagepath);
 num_images = length(imagefiles);
@@ -3294,7 +3294,7 @@ elseif exist('integrated_pixels','var')
         legend(legendCell);
     end
 else
-    section_num = 3;
+    %section_num = 3;
     norm_binned_vals = binned_vals;
 end
 
